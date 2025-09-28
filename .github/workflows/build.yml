@@ -1,0 +1,22 @@
+name: build
+
+# This should ensure that the workflow won't run on `feat/*`, `fix/*` and `chore/*` branches, but will
+# otherwise execute on any other branch and any pull request.
+on:
+  push:
+    branches-ignore:
+      - '**/feat/*'
+      - '**/fix/*'
+      - '**/chore/*'
+  pull_request:
+    branches:
+      - '*'
+
+jobs:
+  validate:
+    uses: sybila/github-workflows/.github/workflows/rust-build-and-check.yml@main
+    with:
+      rust-version: "1.90.0"
+      min-rust-version: "1.88.0"
+    secrets:
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}

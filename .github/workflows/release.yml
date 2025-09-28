@@ -1,0 +1,16 @@
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+name: Publish to crates.io and generate release info
+
+jobs:
+  deploy:
+    uses: sybila/github-workflows/.github/workflows/rust-release-and-publish.yml@main
+    with:
+      min-rust-version: "1.88.0"
+      repository-url: "https://github.com/daemontus/cancel-this"
+    secrets:
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      CRATES_IO_API_TOKEN: ${{ secrets.CRATES_IO_API_TOKEN }}

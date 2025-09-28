@@ -1,4 +1,4 @@
-use crate::{CancellationTrigger, DynamicCancellationTrigger};
+use crate::{CancelNever, CancellationTrigger, DynamicCancellationTrigger};
 
 /// Implementation of [`CancellationTrigger`] which chains together several
 /// trigger implementations.
@@ -35,5 +35,17 @@ impl CancelChain {
     /// and continues with the already present ones.
     pub fn push<T: CancellationTrigger + 'static>(&mut self, trigger: T) {
         self.0.push(Box::new(trigger));
+    }
+
+    /// Make a copy of this trigger chain, but if the chain is empty, or only has a single element,
+    /// replace it with a simplified trigger which does not need vector traversal.
+    pub fn clone_and_flatten(&self) -> DynamicCancellationTrigger {
+        if self.0.is_empty() {
+            Box::new(CancelNever)
+        } else if self.0.len() == 1 {
+            self.0[0].clone()
+        } else {
+            Box::new(self.clone())
+        }
     }
 }

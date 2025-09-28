@@ -133,7 +133,7 @@ pub fn check_local_cancellation() -> Result<(), Cancelled> {
 /// This value can be either used to initialize triggers in a new thread using [`on_trigger`],
 /// or used directly as argument to the [`is_cancelled`] macro to speed up cancellation checks.
 pub fn clone_trigger() -> DynamicCancellationTrigger {
-    TRIGGER.with_borrow(|trigger| Box::new(trigger.clone()))
+    TRIGGER.with_borrow(|trigger| trigger.clone_and_flatten())
 }
 
 /// Run the `action` in a context where a cancellation can be signaled using the given `trigger`.

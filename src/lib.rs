@@ -25,11 +25,12 @@
 //!
 //! ## Complex example
 //!
-//! This example uses most of the features, including error conversion and never-cancel blocks.
+//! This example uses most of the features, including error conversion, never-cancel blocks,
+//! and liveness monitoring.
 //!
 //! ```rust
 //! use std::time::Duration;
-//! use cancel_this::{Cancelled, is_cancelled};
+//! use cancel_this::{Cancelled, is_cancelled, LivenessGuard};
 //!
 //! enum ComputeError {
 //!     Zero,
@@ -57,9 +58,16 @@
 //!     }
 //! }
 //!
+//! let guard = LivenessGuard::new(Duration::from_secs(2), |is_alive| {
+//!     eprintln!("Thread has not responded in the last two seconds.");
+//! });
+//!
 //! let result: Result<String, ComputeError> = cancel_this::on_timeout(Duration::from_millis(200), || {
-//!     // This one should go through
-//!     let r1 = compute(5)?;
+//!     let r1 = cancel_this::on_sigint(|| {
+//!         // This operation can be canceled using Ctrl+C, but the timeout still applies.
+//!         compute(5)
+//!     })?;
+//!
 //!     assert_eq!(r1.as_str(), "25");
 //!     // This will be cancelled. Instead of using `?`, we check
 //!     // that the operation actually got cancelled.
@@ -72,6 +80,8 @@
 //!     compute(10) // This should get immediately canceled.
 //! });
 //!
+//! // The liveness monitoring is active while `guard` is in scope. Once `guard` is dropped here,
+//! // the liveness monitoring is turned off as well.
 //! ```
 //!
 
@@ -81,7 +91,45 @@ mod error;
 /// Various types of triggers, including corresponding `when_*` helper functions.
 mod triggers;
 
+/// Implements a "liveness guard", which monitors the frequency with which cancellations are
+/// checked, making sure the process
+#[cfg(feature = "liveness")]
+mod liveness;
+#[cfg(feature = "liveness")]
+pub use liveness::*;
+
+#[cfg(not(feature = "liveness"))]
+mod liveness {
+    #[derive(Clone, Default)]
+    pub(crate) struct LivenessInterceptor<R: crate::CancellationTrigger + Clone>(R);
+
+    impl<R: crate::CancellationTrigger + Clone> LivenessInterceptor<R> {
+        pub fn as_inner_mut(&mut self) -> &mut R {
+            &mut self.0
+        }
+
+        pub fn as_inner(&self) -> &R {
+            &self.0
+        }
+    }
+
+    impl LivenessInterceptor<crate::CancelChain> {
+        pub fn clone_and_flatten(&self) -> crate::triggers::DynamicCancellationTrigger {
+            // If liveness monitoring is off, we can just use normal flattening.
+            self.as_inner().clone_and_flatten()
+        }
+    }
+
+    impl<R: crate::CancellationTrigger + Clone> crate::CancellationTrigger for LivenessInterceptor<R> {
+        fn is_cancelled(&self) -> bool {
+            // If liveness monitoring is off, we do nothing.
+            self.0.is_cancelled()
+        }
+    }
+}
+
 pub use error::*;
+use liveness::LivenessInterceptor;
 use std::cell::RefCell;
 pub use triggers::*;
 
@@ -93,7 +141,7 @@ thread_local! {
     /// Within the crate, the triggers are either read when checking cancellation status, or
     /// written when entering/leaving scope. However, these two actions are never performed
     /// simultaneously.
-    static TRIGGER: RefCell<CancelChain> = RefCell::new(CancelChain::default());
+    static TRIGGER: RefCell<LivenessInterceptor<CancelChain>> = RefCell::new(LivenessInterceptor::default());
 }
 
 #[macro_export]
@@ -149,8 +197,8 @@ where
     TAction: FnOnce() -> Result<TResult, TError>,
     TError: From<Cancelled>,
 {
-    TRIGGER.with_borrow_mut(|thread_trigger| thread_trigger.push(trigger));
+    TRIGGER.with_borrow_mut(|thread_trigger| thread_trigger.as_inner_mut().push(trigger));
     let result = action();
-    TRIGGER.with_borrow_mut(|thread_trigger| thread_trigger.pop());
+    TRIGGER.with_borrow_mut(|thread_trigger| thread_trigger.as_inner_mut().pop());
     result
 }

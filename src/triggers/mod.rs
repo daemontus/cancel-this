@@ -48,3 +48,9 @@ clone_trait_object!(CancellationTrigger);
 
 /// A dynamic boxed [`CancellationTrigger`].
 pub type DynamicCancellationTrigger = Box<dyn CancellationTrigger>;
+
+impl CancellationTrigger for DynamicCancellationTrigger {
+    fn is_cancelled(&self) -> bool {
+        self.as_ref().is_cancelled()
+    }
+}

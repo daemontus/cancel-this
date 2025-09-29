@@ -1,3 +1,4 @@
+use crate::liveness::LivenessInterceptor;
 use crate::{CancelChain, CancellationTrigger, Cancelled, TRIGGER};
 
 /// Run the given `action` by overriding current cancellation criteria with [`CancelNever`],
@@ -41,7 +42,7 @@ where
     TAction: FnOnce() -> Result<TResult, TError>,
     TError: From<Cancelled>,
 {
-    let mut set_aside = CancelChain::default();
+    let mut set_aside = LivenessInterceptor::<CancelChain>::default();
     TRIGGER.with_borrow_mut(|value| std::mem::swap(value, &mut set_aside));
     let result = crate::on_trigger(CancelNever, action);
     TRIGGER.with_borrow_mut(|value| std::mem::swap(value, &mut set_aside));

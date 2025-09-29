@@ -11,7 +11,8 @@
 This crate provides a user-friendly way to implement cooperative 
 cancellation in Rust based on a wide range of criteria, including
 *triggers*, *timers*, *OS signals* (Ctrl+C), or the *Python 
-interpreter linked using PyO3*.
+interpreter linked using PyO3*. It also provides liveness monitoring
+of "cancellation aware" code.
 
 **Why not use `async` instead of cooperative cancellation?** Simply put, `async`
 adds a lot of other "weight" to your project that you might not need/want. With
@@ -26,7 +27,19 @@ make cancellation dead simple: You register however many cancellation triggers
 you want, each trigger is valid within a specific scope, and can be checked
 by a macro anywhere in your code.
 
+### Current features
+
+ - Scoped cancellation using thread-local "cancellation triggers".
+ - Out-of-the box support for triggers based on atomics and timers.
+ - With feature `ctrlc` enabled, support for cancellation using `SIGINT` signals.
+ - With feature `pyo3` enabled, support for cancellation using `Python::check_signals`.
+ - With feature `liveness` enabled, you can register a per-thread handler which is invoked
+   every time the thread becomes unresponsive (i.e. cancellation check has not been performed
+   withing the prescribed interval).
+
 ### Simple example
+
+A simple counter that is eventually cancelled by a one-second timeout:
 
 ```rust
 use std::time::Duration;

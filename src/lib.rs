@@ -1,5 +1,35 @@
+//! This crate provides a user-friendly way to implement cooperative
+//! cancellation in Rust based on a wide range of criteria, including
+//! *triggers*, *timers*, *OS signals* (Ctrl+C), or the *Python
+//! interpreter linked using PyO3*. It also provides liveness monitoring
+//! of "cancellation-aware" code.
+//!
+//! *Why not use `async` instead of cooperative cancellation?* Simply put, `async`
+//! adds a lot of other "weight" to your project that you might not need/want. With
+//! `cancel_this`, you can add your own cancellation logic with minimal impact on
+//! your project's footprint.
+//!
+//! *Why not use [`stop-token`](https://crates.io/crates/stop-token) or other
+//! cooperative cancellation crates?* So far, all crates I have seen require you
+//! to pass the cancellation token around and generally do not make it easy to
+//! combine the effects of multiple tokens. In `cancel_this`, the goal was to
+//! make cancellation dead simple: You register however many cancellation triggers
+//! you want, each trigger is valid within a specific scope, and can be checked
+//! by a macro anywhere in your code.
+//!
+//! ### Current features
+//!
+//! - Scoped cancellation using thread-local "cancellation triggers".
+//! - Out-of-the box support for triggers based on atomics and timers.
+//! - With feature `ctrlc` enabled, support for cancellation using `SIGINT` signals.
+//! - With feature `pyo3` enabled, support for cancellation using `Python::check_signals`.
+//! - With feature `liveness` enabled, you can register a per-thread handler which is invoked
+//!   every time the thread becomes unresponsive (i.e. cancellation check has not been performed
+//!   withing the prescribed interval).
 //!
 //! ### Simple example
+//!
+//! A simple counter that is eventually cancelled by a one-second timeout:
 //!
 //! ```rust
 //! use std::time::Duration;
@@ -133,6 +163,7 @@ use liveness::LivenessInterceptor;
 use std::cell::RefCell;
 pub use triggers::*;
 
+/// The "default" [`crate::Cancelled`] cause, reported when the trigger type is unknown.
 pub const UNKNOWN_CAUSE: &str = "UnknownCancellationTrigger";
 
 thread_local! {
@@ -144,6 +175,8 @@ thread_local! {
     static TRIGGER: RefCell<LivenessInterceptor<CancelChain>> = RefCell::new(LivenessInterceptor::default());
 }
 
+/// Call this macro every time your code wants to check for cancellation. It returns
+/// `Result<(), Cancelled>`, which can typically be propagated using the `?` operator.
 #[macro_export]
 macro_rules! is_cancelled {
     () => {

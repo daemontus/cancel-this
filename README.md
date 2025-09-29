@@ -1,3 +1,11 @@
+[![Crates.io](https://img.shields.io/crates/v/cancel-this?style=flat-square)](https://crates.io/crates/cancel-this)
+[![Api Docs](https://img.shields.io/badge/docs-api-yellowgreen?style=flat-square)](https://docs.rs/cancel-this/)
+[![Continuous integration](https://img.shields.io/github/actions/workflow/status/daemontus/cancel-this/build.yml?branch=main&style=flat-square)](https://github.com/daemontus/cancel-this/actions?query=workflow%3Abuild)
+[![Coverage](https://img.shields.io/codecov/c/github/daemontus/cancel-this?style=flat-square)](https://codecov.io/gh/daemontus/cancel-this)
+[![GitHub issues](https://img.shields.io/github/issues/daemontus/cancel-this?style=flat-square)](https://github.com/daemontus/cancel-this/issues)
+[![GitHub last commit](https://img.shields.io/github/last-commit/daemontus/cancel-this?style=flat-square)](https://github.com/daemontus/cancel-this/commits/main)
+[![Crates.io](https://img.shields.io/crates/l/cancel-this?style=flat-square)](https://github.com/daemontus/cancel-this/blob/main/LICENSE)
+
 # `cancel_this` (Rust co-op cancellation)
 
 This crate provides a user-friendly way to implement cooperative 

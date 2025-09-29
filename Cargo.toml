@@ -2,6 +2,14 @@
 name = "cancel-this"
 version = "0.1.0"
 edition = "2024"
+authors = ["Samuel Pastva <daemontus@gmail.com>"]
+rust-version = "1.88.0"
+description = "A user-friendly cooperative cancellation and liveness monitoring library."
+homepage = "https://github.com/daemontus/cancel-this"
+repository = "https://github.com/daemontus/cancel-this"
+readme = "README.md"
+keywords = ["cancel", "cancellation", "liveness", "cooperative"]
+license = "MIT"
 
 [features]
 # Allows using Ctrlc trigger

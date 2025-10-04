@@ -27,6 +27,22 @@ use pyo3::{PyErr, Python};
 ///         Ok(())
 ///     })
 /// }
+///
+/// // Ideally, we would be using cancellable_counter directly in Python code, but
+/// // that's really hard to do in these tests, so we try the next best thing.
+///
+/// // Interpreter needs to be initialized if we are to check signals on it.
+/// pyo3::Python::initialize();
+///
+/// let result_fast = cancel_this::on_python(|| {
+///     cancel_this::on_timeout(Duration::from_millis(100), || cancellable_counter(5))
+/// });
+/// assert!(result_fast.is_ok());
+///
+/// let result_slow = cancel_this::on_python(|| {
+///     cancel_this::on_timeout(Duration::from_millis(100), || cancellable_counter(50))
+/// });
+/// assert!(result_slow.is_err());
 /// ```
 pub fn on_python<R, E, Action>(action: Action) -> Result<R, E>
 where

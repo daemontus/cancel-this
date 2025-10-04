@@ -1,14 +1,13 @@
 use crate::{CancelChain, CancellationTrigger, DynamicCancellationTrigger};
-use atomic_time::AtomicInstant;
 use log::{trace, warn};
 use std::sync::Arc;
-use std::sync::atomic::Ordering;
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::mpsc::Sender;
 use std::thread::JoinHandle;
-use std::time::{Duration, Instant};
+use std::time::Duration;
 
 thread_local! {
-    static LAST_CANCELLATION_CHECK: Arc<AtomicInstant> = Arc::new(AtomicInstant::now());
+    static CANCELLATION_STAMP: Arc<AtomicU64> = Arc::new(AtomicU64::default());
 }
 
 /// Liveness guard observes [`crate::is_cancelled`] calls and reports situations where the
@@ -74,9 +73,10 @@ impl LivenessGuard {
         status_change: TAction,
     ) -> LivenessGuard {
         let (sender, receiver) = std::sync::mpsc::channel();
-        let cancellation_token = LAST_CANCELLATION_CHECK.try_with(|it| it.clone()).unwrap();
+        let cancellation_token = CANCELLATION_STAMP.try_with(|it| it.clone()).unwrap();
         let monitor_thread = std::thread::spawn(move || {
             let mut is_alive = true;
+            let mut last_stamp = 0u64;
             loop {
                 // If this is `Ok`, it means the monitor is being destroyed.
                 // If it is `Err`, it means the duration elapsed.
@@ -84,11 +84,11 @@ impl LivenessGuard {
                     Ok(()) => return,
                     Err(_) => {
                         trace!("`LivenessGuard` waking up to evaluate task activity...");
-                        let last_check = cancellation_token.load(Ordering::SeqCst);
-                        let elapsed = Instant::now().duration_since(last_check);
-                        let new_is_alive = elapsed <= threshold;
+                        let current_stamp = cancellation_token.load(Ordering::SeqCst);
+                        let new_is_alive = current_stamp != last_stamp;
                         if new_is_alive != is_alive {
                             is_alive = new_is_alive;
+                            last_stamp = current_stamp;
                             status_change(is_alive);
                         }
                     }
@@ -150,13 +150,9 @@ impl LivenessInterceptor<CancelChain> {
 
 impl<R: CancellationTrigger + Clone> CancellationTrigger for LivenessInterceptor<R> {
     fn is_cancelled(&self) -> bool {
-        let result =
-            LAST_CANCELLATION_CHECK.try_with(|it| it.store(Instant::now(), Ordering::SeqCst));
+        let result = CANCELLATION_STAMP.try_with(|it| it.fetch_add(1, Ordering::SeqCst));
         if let Err(e) = result {
-            warn!(
-                "`LivenessGuard` cannot update the cancellation check time: {:?}",
-                e
-            );
+            warn!("`LivenessGuard` cannot update the cancellation stamp: {e:?}");
         }
         self.0.is_cancelled()
     }

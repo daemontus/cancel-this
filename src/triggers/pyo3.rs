@@ -54,6 +54,8 @@ where
 
 /// Implementation of [`CancellationTrigger`] that is cancelled by a PyO3 Python signal
 /// (see also [`Python::check_signals`]).
+///
+/// See also [`crate::on_python`].
 #[derive(Debug, Clone, Default)]
 pub struct CancelPython(CancelAtomic);
 

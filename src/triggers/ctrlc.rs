@@ -72,6 +72,8 @@ lazy_static! {
 /// needs to call `ctrlc::set_handler` upon first use, meaning it can fail if
 /// other features in your code also use `ctrlc`.
 ///
+/// See also [`crate::on_sigint`].
+///
 /// ## Logging
 ///  - [`trace`] Every time the SIGINT event is processed, the number of affected triggers
 ///    is listed. Each trigger should also produce a message once actually cancelled.

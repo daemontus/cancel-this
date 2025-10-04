@@ -40,6 +40,8 @@ where
 /// Implementation of [`CancellationTrigger`] that is cancelled once the specified [`Duration`]
 /// elapsed. The "timer" is started immediately upon creation.
 ///
+/// See also [`crate::on_timeout`].
+///
 /// ## Logging
 ///  - `[trace]` Every time a timer is started or elapsed (i.e. upon cancellation).
 ///  - `[warn]` If the timer is dropped, but the timer thread cannot be safely destroyed.

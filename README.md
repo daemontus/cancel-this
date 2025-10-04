@@ -14,17 +14,19 @@ cancellation in Rust based on a wide range of criteria, including
 interpreter linked using PyO3*. It also provides liveness monitoring
 of "cancellation aware" code.
 
-**Why not use `async` instead of cooperative cancellation?** Simply put, `async`
-adds a lot of other "weight" to your project that you might not need/want. With
-`cancel_this`, you can add your own cancellation logic with minimal impact on
-your project's footprint.
+**Why not use `async` instead of cooperative cancellation?** In principle,
+`async` was designed to solve a different problem, and that's executing IO-bound 
+tasks in a non-blocking fashion. It is not *really* designed for CPU-bound tasks. 
+Consequently, using `async` adds a lot of unnecessary overhead to your project
+which `cancel_this` does not have (see also the *Performance* section below).
 
-**Why not use [`stop-token`](https://crates.io/crates/stop-token) or other 
-cooperative cancellation crates?** So far, all crates I have seen require you
+**Why not use [`stop-token`](https://crates.io/crates/stop-token), 
+[`CancellationToken`](https://docs.rs/tokio-util/latest/tokio_util/sync/struct.CancellationToken.html) 
+or other cooperative cancellation crates?** So far, all crates I have seen require you
 to pass the cancellation token around and generally do not make it easy to
 combine the effects of multiple tokens. In `cancel_this`, the goal was to 
 make cancellation dead simple: You register however many cancellation triggers 
-you want, each trigger is valid within a specific scope, and can be checked
+you want, each trigger is valid within a specific scope (and thread), and can be checked
 by a macro anywhere in your code.
 
 ### Current features
@@ -36,6 +38,8 @@ by a macro anywhere in your code.
  - With feature `liveness` enabled, you can register a per-thread handler which is invoked
    every time the thread becomes unresponsive (i.e. cancellation check has not been performed
    withing the prescribed interval).
+ - Practically no overhead in cancellable code when cancellation is not enabled.
+ - Very small overhead for "atomic-based" cancellation triggers, acceptable overhead for PyO3 cancellation.
 
 ### Simple example
 

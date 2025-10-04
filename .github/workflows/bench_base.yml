@@ -10,7 +10,7 @@ env:
 
 jobs:
   benchmark_base_branch:
-    name: Continuous Benchmarking with Bencher
+    name: Base Benchmark
     permissions:
       checks: write
     runs-on: self-hosted

@@ -29,3 +29,9 @@ atomic-time = { version = "0.1.5", optional = true }
 
 [dev-dependencies]
 libc = "0.2.176"
+criterion = { version = "0.7", features = ["html_reports", "async_tokio"] }
+tokio = { version = "1.47.1", features = ["rt-multi-thread", "time"] }
+
+[[bench]]
+name = "bench_hash"
+harness = false

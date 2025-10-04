@@ -46,7 +46,8 @@ by a macro anywhere in your code.
 
 ### Simple example
 
-A simple counter that is eventually cancelled by a one-second timeout:
+A simple counter that is eventually cancelled by a one-second timeout. More complex examples (including
+liveness monitoring and multi-threaded usage) are provided in the [documentation](https://docs.rs/cancel-this/).
 
 ```rust
 use std::time::Duration;

@@ -1,6 +1,9 @@
-use crate::{CancelAtomic, CancellationTrigger, Cancelled};
+use crate::{CancellationTrigger, Cancelled};
+use lazy_static::lazy_static;
 use pyo3::exceptions::PyInterruptedError;
 use pyo3::{PyErr, Python};
+use std::sync::Arc;
+use std::sync::atomic::{AtomicU64, Ordering};
 
 /// Run the given `action`, cancelling it if signalled by the PyO3 Python
 /// interpreter using [`CancelPython`].
@@ -8,7 +11,6 @@ use pyo3::{PyErr, Python};
 /// Note that when `pyo3` feature is enabled, [`Cancelled`] can be automatically converted
 /// to [`PyInterruptedError`], so [`crate::is_cancelled`] should work in all
 /// functions returning [`pyo3::PyResult`].
-///
 ///
 /// ```rust
 /// # use cancel_this::{is_cancelled, Cancellable};
@@ -52,26 +54,42 @@ where
     crate::on_trigger(CancelPython::default(), action)
 }
 
+lazy_static! {
+    /// A counter that increments every time we detect Python signal interrupt.
+    static ref PYTHON_GLOBAL_MONITOR: Arc<AtomicU64> = {
+        let monitor = Arc::new(AtomicU64::new(0));
+        let thread_monitor = monitor.clone();
+
+        // Start an observer thread that wakes up every millisecond and checks
+        // if cancellation has happened or not. This thread never stops.
+        std::thread::spawn(move || {
+            loop {
+                Python::try_attach(|py| {
+                    if py.check_signals().is_err() {
+                        thread_monitor.fetch_add(1, Ordering::SeqCst);
+                    }
+                });
+                std::thread::sleep(std::time::Duration::from_millis(1));
+            }
+        });
+
+        monitor
+    };
+}
+
 /// Implementation of [`CancellationTrigger`] that is cancelled by a PyO3 Python signal
-/// (see also [`Python::check_signals`]).
+/// (see also [`Python::check_signals`]). With the current implementation,
+/// [`Python::check_signals`] is called at most once every millisecond, meaning cancellation
+/// more granular than `1ms` is not supported.
 ///
 /// See also [`crate::on_python`].
 #[derive(Debug, Clone, Default)]
-pub struct CancelPython(CancelAtomic);
+pub struct CancelPython(u64);
 
 impl CancellationTrigger for CancelPython {
     fn is_cancelled(&self) -> bool {
-        if self.0.is_cancelled() {
-            true
-        } else {
-            let signal = Python::attach(|py| py.check_signals()).is_err();
-            if signal {
-                self.0.cancel();
-                true
-            } else {
-                false
-            }
-        }
+        let current = PYTHON_GLOBAL_MONITOR.load(Ordering::SeqCst);
+        current != self.0
     }
 
     fn type_name(&self) -> &'static str {

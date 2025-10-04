@@ -23,6 +23,17 @@ fn cancellable_hash_data(data: &[u64]) -> Cancellable<u64> {
     Ok(hasher.finish())
 }
 
+/// The same as [`default_hash_data`], but allows the task to be cancelled during each iteration.
+fn cached_cancellable_hash_data(data: &[u64]) -> Cancellable<u64> {
+    let trigger = cancel_this::active_triggers();
+    let mut hasher = DefaultHasher::new();
+    for x in data {
+        is_cancelled!(trigger)?;
+        hasher.write_u64(*x);
+    }
+    Ok(hasher.finish())
+}
+
 /// Finally, the same as [`cancellable_hash_data`], but using async functions.
 async fn async_hash_data(data: &[u64]) -> u64 {
     let mut hasher = DefaultHasher::new();
@@ -60,16 +71,33 @@ fn criterion_benchmark(c: &mut Criterion) {
     // Check performance when the operation is cancellable but no cancellation
     // handler is registered at runtime.
     c.bench_function(
-        format!("{bench_prefix}::cancellable:none; {bench_key}").as_str(),
+        format!("{bench_prefix}::cancellable::none; {bench_key}").as_str(),
         |b| b.iter(|| cancellable_hash_data(black_box(&data))),
+    );
+
+    // Check performance when the operation is cancellable but no cancellation
+    // handler is registered at runtime.
+    c.bench_function(
+        format!("{bench_prefix}::cancellable::none::cached; {bench_key}").as_str(),
+        |b| b.iter(|| cached_cancellable_hash_data(black_box(&data))),
     );
 
     // Check cancellation using atomic trigger.
     let trigger = CancelAtomic::default();
     let r: Cancellable<()> = cancel_this::on_atomic(trigger, || {
         c.bench_function(
-            format!("{bench_prefix}:::cancellable::atomic; {bench_key}").as_str(),
+            format!("{bench_prefix}::cancellable::atomic; {bench_key}").as_str(),
             |b| b.iter(|| cancellable_hash_data(black_box(&data))),
+        );
+        Ok(())
+    });
+    assert!(r.is_ok());
+
+    let trigger = CancelAtomic::default();
+    let r: Cancellable<()> = cancel_this::on_atomic(trigger, || {
+        c.bench_function(
+            format!("{bench_prefix}::cancellable::atomic::cached; {bench_key}").as_str(),
+            |b| b.iter(|| cached_cancellable_hash_data(black_box(&data))),
         );
         Ok(())
     });
@@ -83,7 +111,7 @@ fn criterion_benchmark(c: &mut Criterion) {
     // Check cancellation using timeout.
     let r: Cancellable<()> = cancel_this::on_timeout(Duration::from_secs(600), || {
         c.bench_function(
-            format!("{bench_prefix}:::cancellable::timeout; {bench_key}").as_str(),
+            format!("{bench_prefix}::cancellable::timeout; {bench_key}").as_str(),
             |b| b.iter(|| cancellable_hash_data(black_box(&data))),
         );
         Ok(())
@@ -93,7 +121,7 @@ fn criterion_benchmark(c: &mut Criterion) {
     // Check cancellation using SIGINT.
     let r: Cancellable<()> = cancel_this::on_sigint(|| {
         c.bench_function(
-            format!("{bench_prefix}:::cancellable::sigint; {bench_key}").as_str(),
+            format!("{bench_prefix}::cancellable::sigint; {bench_key}").as_str(),
             |b| b.iter(|| cancellable_hash_data(black_box(&data))),
         );
         Ok(())
@@ -106,7 +134,7 @@ fn criterion_benchmark(c: &mut Criterion) {
     pyo3::Python::initialize();
     let r: Cancellable<()> = cancel_this::on_python(|| {
         c.bench_function(
-            format!("{bench_prefix}:::cancellable::python; {bench_key}").as_str(),
+            format!("{bench_prefix}::cancellable::python; {bench_key}").as_str(),
             |b| b.iter(|| cancellable_hash_data(black_box(&data))),
         );
         Ok(())

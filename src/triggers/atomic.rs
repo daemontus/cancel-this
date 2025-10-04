@@ -53,7 +53,7 @@ where
 }
 
 /// Implementation of [`CancellationTrigger`] that is cancelled manually by calling
-/// [`CancelAtomic::cancel`].
+/// [`CancelAtomic::cancel`]. See also [`crate::on_atomic`].
 ///
 /// It is safe to cancel this trigger multiple times, and once cancelled, the trigger
 /// cannot be reset.

@@ -50,6 +50,8 @@ where
 }
 
 /// Implementation of [`CancellationTrigger`] that is never cancelled.
+///
+/// See also [`crate::never`].
 #[derive(Debug, Clone, Copy, Default)]
 pub struct CancelNever;
 

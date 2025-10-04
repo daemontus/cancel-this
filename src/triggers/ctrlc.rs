@@ -82,6 +82,10 @@ impl CancellationTrigger for CancelCtrlc {
     fn is_cancelled(&self) -> bool {
         self.0.is_cancelled()
     }
+
+    fn type_name(&self) -> &'static str {
+        "CancelCtrlc"
+    }
 }
 
 impl Default for CancelCtrlc {
@@ -108,5 +112,21 @@ impl CancelCtrlc {
                 Ok(CancelCtrlc(trigger))
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::CancelCtrlc;
+
+    #[test]
+    fn ctrlc_twice() {
+        ctrlc::set_handler(|| {
+            unimplemented!();
+        })
+        .unwrap();
+
+        let trigger = CancelCtrlc::try_new();
+        assert!(trigger.is_err());
     }
 }

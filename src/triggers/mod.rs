@@ -39,9 +39,7 @@ pub trait CancellationTrigger: Send + Sync + DynClone {
 
     /// Return the type name of this [`CancellationTrigger`], or in case of "composite"
     /// triggers, *the type name of the trigger that actually signalled the cancellation*.
-    fn type_name(&self) -> &'static str {
-        std::any::type_name::<Self>()
-    }
+    fn type_name(&self) -> &'static str;
 }
 
 clone_trait_object!(CancellationTrigger);
@@ -52,5 +50,9 @@ pub type DynamicCancellationTrigger = Box<dyn CancellationTrigger>;
 impl CancellationTrigger for DynamicCancellationTrigger {
     fn is_cancelled(&self) -> bool {
         self.as_ref().is_cancelled()
+    }
+
+    fn type_name(&self) -> &'static str {
+        self.as_ref().type_name()
     }
 }

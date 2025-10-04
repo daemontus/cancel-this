@@ -53,6 +53,10 @@ impl CancellationTrigger for CancelTimer {
     fn is_cancelled(&self) -> bool {
         self.0.is_cancelled()
     }
+
+    fn type_name(&self) -> &'static str {
+        "CancelTimer"
+    }
 }
 
 impl CancelTimer {

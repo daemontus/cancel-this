@@ -42,3 +42,24 @@ impl Cancelled {
         self.cause
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::Cancelled;
+
+    #[test]
+    fn test_cancelled_error() {
+        let cancelled = Cancelled::new("CancelAtomic");
+        assert_eq!(cancelled.cause(), "CancelAtomic");
+        assert_eq!(
+            cancelled.to_string(),
+            "Operation cancelled (caused by `CancelAtomic`)"
+        );
+        let default = Cancelled::default();
+        assert_eq!(default.cause(), crate::UNKNOWN_CAUSE);
+        assert_eq!(
+            default.to_string(),
+            "Operation cancelled (caused by `UnknownCancellationTrigger`)"
+        );
+    }
+}

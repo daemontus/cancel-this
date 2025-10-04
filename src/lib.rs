@@ -114,6 +114,80 @@
 //! // the liveness monitoring is turned off as well.
 //! ```
 //!
+//! ## Multi-threaded example
+//!
+//! Virtually all triggers and guards provided by `cancel_this` only apply to the current
+//! thread. However, since triggers can be safely shared across threads, it is possible to
+//! transfer them from one thread to another. Note that the transferred triggers also inherently
+//! update the liveness guard of the original thread.
+//!
+//! ```rust
+//! # use std::thread::JoinHandle;
+//! # use std::time::Duration;
+//! # use cancel_this::{is_cancelled, Cancellable, LivenessGuard};
+//!
+//! let guard = LivenessGuard::new(Duration::from_millis(10), |is_alive| {
+//!     // In this test, the liveness guard should never trigger, even though the original
+//!     // thread goes to sleep for a long time, waiting to join with the spawned thread.
+//!     assert!(is_alive);
+//! });
+//!
+//! let result: Cancellable<u32> = cancel_this::on_timeout(Duration::from_millis(100), || {
+//!     let active = cancel_this::active_triggers();
+//!     let t1: JoinHandle<Cancellable<u32>> = std::thread::spawn(|| {
+//!         cancel_this::on_trigger(active, || {
+//!             let mut result = 0u32;
+//!             // This cycle is eventually going to get cancelled
+//!             // by the timer which is "transferred" from the spawning thread.
+//!             for i in 0..50 {
+//!                 result += 1;
+//!                 is_cancelled!()?;
+//!                 std::thread::sleep(Duration::from_millis(5));
+//!             }
+//!             Ok(result)
+//!         })
+//!     });
+//!     // Put the spawning thread to sleep until `t1` finishes.
+//!     t1.join().unwrap()
+//! });
+//!
+//! assert!(result.is_err());
+//! ```
+//!
+//! Doing the same without transferring cancellation triggers will cause the spawning
+//! thread to be registered as unresponsive and the compute thread to never actually get
+//! cancelled:
+//!
+//! ```rust
+//! # use std::thread::JoinHandle;
+//! # use std::time::Duration;
+//! # use cancel_this::{is_cancelled, Cancellable, LivenessGuard};
+//!
+//! let guard = LivenessGuard::new(Duration::from_millis(10), |is_alive| {
+//!     // In this test, the liveness guard should never trigger, even though the original
+//!     // thread goes to sleep for a long time, waiting to join with the spawned thread.
+//!     assert!(!is_alive);
+//! });
+//!
+//! let result: Cancellable<u32> = cancel_this::on_timeout(Duration::from_millis(100), || {
+//!     let t1: JoinHandle<Cancellable<u32>> = std::thread::spawn(|| {
+//!         let mut result = 0u32;
+//!         // This cycle is never going to get cancelled, because we didn't transfer
+//!         // the timeout trigger from the original thread.
+//!         for i in 0..50 {
+//!             result += 1;
+//!             is_cancelled!()?;
+//!             std::thread::sleep(Duration::from_millis(5));
+//!         }
+//!         Ok(result)
+//!     });
+//!     // Put the spawning thread to sleep until `t1` finishes.
+//!     t1.join().unwrap()
+//! });
+//!
+//! assert!(result.is_ok());
+//! ```
+//!
 
 /// Cancellation error type.
 mod error;
@@ -155,6 +229,10 @@ mod liveness {
             // If liveness monitoring is off, we do nothing.
             self.0.is_cancelled()
         }
+
+        fn type_name(&self) -> &'static str {
+            self.0.type_name()
+        }
     }
 }
 
@@ -163,7 +241,7 @@ use liveness::LivenessInterceptor;
 use std::cell::RefCell;
 pub use triggers::*;
 
-/// The "default" [`crate::Cancelled`] cause, reported when the trigger type is unknown.
+/// The "default" [`Cancelled`] cause, reported when the trigger type is unknown.
 pub const UNKNOWN_CAUSE: &str = "UnknownCancellationTrigger";
 
 thread_local! {
@@ -204,7 +282,7 @@ pub fn check_cancellation<TCancel: CancellationTrigger>(
 /// you don't use this method directly, but instead use the [`is_cancelled`] macro.
 ///
 /// To avoid a repeated borrow of the thread-local value in performance-sensitive applications,
-/// you can use [`clone_trigger`] to cache the value in a local variable.
+/// you can use [`active_triggers`] to cache the value in a local variable.
 pub fn check_local_cancellation() -> Result<(), Cancelled> {
     TRIGGER.with_borrow(check_cancellation)
 }
@@ -213,7 +291,7 @@ pub fn check_local_cancellation() -> Result<(), Cancelled> {
 ///
 /// This value can be either used to initialize triggers in a new thread using [`on_trigger`],
 /// or used directly as argument to the [`is_cancelled`] macro to speed up cancellation checks.
-pub fn clone_trigger() -> DynamicCancellationTrigger {
+pub fn active_triggers() -> DynamicCancellationTrigger {
     TRIGGER.with_borrow(|trigger| trigger.clone_and_flatten())
 }
 

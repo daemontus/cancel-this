@@ -131,6 +131,14 @@ impl Drop for LivenessGuard {
 #[derive(Clone, Default)]
 pub(crate) struct LivenessInterceptor<R: CancellationTrigger + Clone>(R);
 
+/// Used to implement "liveness transfers" between threads, allowing one thread to notify
+/// the liveness stamp of the parent thread.
+#[derive(Clone)]
+pub(crate) struct TransferredLivenessInterceptor<R: CancellationTrigger + Clone> {
+    inner: R,
+    stamp: Arc<AtomicU64>,
+}
+
 impl<R: CancellationTrigger + Clone> LivenessInterceptor<R> {
     pub fn as_inner_mut(&mut self) -> &mut R {
         &mut self.0
@@ -144,7 +152,16 @@ impl<R: CancellationTrigger + Clone> LivenessInterceptor<R> {
 impl LivenessInterceptor<CancelChain> {
     pub fn clone_and_flatten(&self) -> DynamicCancellationTrigger {
         let chain = self.as_inner().clone_and_flatten();
-        Box::new(LivenessInterceptor(chain))
+        match CANCELLATION_STAMP.try_with(Arc::clone) {
+            Ok(stamp) => Box::new(TransferredLivenessInterceptor {
+                inner: chain,
+                stamp,
+            }),
+            Err(e) => {
+                warn!("`LivenessGuard` cannot access the cancellation stamp: {e:?}");
+                chain
+            }
+        }
     }
 }
 
@@ -159,5 +176,16 @@ impl<R: CancellationTrigger + Clone> CancellationTrigger for LivenessInterceptor
 
     fn type_name(&self) -> &'static str {
         self.0.type_name()
+    }
+}
+
+impl<R: CancellationTrigger + Clone> CancellationTrigger for TransferredLivenessInterceptor<R> {
+    fn is_cancelled(&self) -> bool {
+        self.stamp.fetch_add(1, Ordering::SeqCst);
+        self.inner.is_cancelled()
+    }
+
+    fn type_name(&self) -> &'static str {
+        self.inner.type_name()
     }
 }

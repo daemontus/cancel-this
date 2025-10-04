@@ -114,3 +114,19 @@ impl CancelCtrlc {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::CancelCtrlc;
+
+    #[test]
+    fn ctrlc_twice() {
+        ctrlc::set_handler(|| {
+            unimplemented!();
+        })
+        .unwrap();
+
+        let trigger = CancelCtrlc::try_new();
+        assert!(trigger.is_err());
+    }
+}

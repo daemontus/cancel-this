@@ -2,19 +2,21 @@
 //! cancellation in Rust based on a wide range of criteria, including
 //! *triggers*, *timers*, *OS signals* (Ctrl+C), or the *Python
 //! interpreter linked using PyO3*. It also provides liveness monitoring
-//! of "cancellation-aware" code.
+//! of "cancellation aware" code.
 //!
-//! *Why not use `async` instead of cooperative cancellation?* Simply put, `async`
-//! adds a lot of other "weight" to your project that you might not need/want. With
-//! `cancel_this`, you can add your own cancellation logic with minimal impact on
-//! your project's footprint.
+//! **Why not use `async` instead of cooperative cancellation?** In principle,
+//! `async` was designed to solve a different problem, and that's executing IO-bound
+//! tasks in a non-blocking fashion. It is not *really* designed for CPU-bound tasks.
+//! Consequently, using `async` adds a lot of unnecessary overhead to your project
+//! which `cancel_this` does not have (see also the *Performance* section in the project README).
 //!
-//! *Why not use [`stop-token`](https://crates.io/crates/stop-token) or other
-//! cooperative cancellation crates?* So far, all crates I have seen require you
+//! **Why not use [`stop-token`](https://crates.io/crates/stop-token),
+//! [`CancellationToken`](https://docs.rs/tokio-util/latest/tokio_util/sync/struct.CancellationToken.html)
+//! or other cooperative cancellation crates?** So far, all crates I have seen require you
 //! to pass the cancellation token around and generally do not make it easy to
 //! combine the effects of multiple tokens. In `cancel_this`, the goal was to
 //! make cancellation dead simple: You register however many cancellation triggers
-//! you want, each trigger is valid within a specific scope, and can be checked
+//! you want, each trigger is valid within a specific scope (and thread), and can be checked
 //! by a macro anywhere in your code.
 //!
 //! ### Current features
@@ -23,9 +25,14 @@
 //! - Out-of-the box support for triggers based on atomics and timers.
 //! - With feature `ctrlc` enabled, support for cancellation using `SIGINT` signals.
 //! - With feature `pyo3` enabled, support for cancellation using `Python::check_signals`.
-//! - With feature `liveness` enabled, you can register a per-thread handler which is invoked
-//!   every time the thread becomes unresponsive (i.e. cancellation check has not been performed
-//!   withing the prescribed interval).
+//! - With feature `liveness` enabled, you can register a per-thread handler invoked
+//!   once the thread becomes unresponsive (i.e. cancellation is not checked periodically
+//!   withing the desired interval).
+//! - Practically no overhead in cancellable code when cancellation is not enabled.
+//! - Very small overhead for "atomic-based" cancellation triggers, acceptable overhead for PyO3 cancellation.
+//! - All triggers and guards generate [`log`](https://crates.io/crates/log) messages (`trace` for normal operation,
+//!   `warn` for issues where panic can be avoided).
+//!
 //!
 //! ### Simple example
 //!
@@ -188,6 +195,32 @@
 //! assert!(result.is_ok());
 //! ```
 //!
+//! ## Cached triggers example
+//!
+//! If you need the absolute lowest overhead, you might want to sacrifice some of the
+//! ergonomics provided by `cancel_this`. To reduce overhead, you can create a local copy
+//! of the thread-local triggers the same way as in the multithreaded example, and use it
+//! directly with `is_cancelled!`. This significantly reduces the overhead of each
+//! cancellation check.
+//!
+//! ```rust
+//! # use std::time::Duration;
+//! # use cancel_this::{is_cancelled, Cancellable};
+//! let result: Cancellable<u32> = cancel_this::on_timeout(Duration::from_millis(100), || {
+//!     let cache = cancel_this::active_triggers();
+//!     let mut result = 0u32;
+//!     while true {
+//!         // The overhead of this `is_cancelled` call is reduced, because triggers
+//!         // are cached in a local variable. However, the cache is only valid within
+//!         // the scope where it was obtained.
+//!         is_cancelled!(cache)?;
+//!         result += 1;
+//!     }
+//!     Ok(result)
+//! });
+//! assert!(result.is_err())
+//! ```
+//!
 
 /// Cancellation error type.
 mod error;
@@ -261,7 +294,7 @@ macro_rules! is_cancelled {
         $crate::check_local_cancellation()
     };
     ($handler:ident) => {
-        $crate::check_cancellation($handler)
+        $crate::check_cancellation(&$handler)
     };
 }
 

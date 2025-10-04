@@ -36,11 +36,13 @@ by a macro anywhere in your code.
  - Out-of-the box support for triggers based on atomics and timers.
  - With feature `ctrlc` enabled, support for cancellation using `SIGINT` signals.
  - With feature `pyo3` enabled, support for cancellation using `Python::check_signals`.
- - With feature `liveness` enabled, you can register a per-thread handler which is invoked
-   every time the thread becomes unresponsive (i.e. cancellation check has not been performed
-   withing the prescribed interval).
+ - With feature `liveness` enabled, you can register a per-thread handler invoked
+   once the thread becomes unresponsive (i.e. cancellation is not checked periodically
+   withing the desired interval).
  - Practically no overhead in cancellable code when cancellation is not enabled.
  - Very small overhead for "atomic-based" cancellation triggers, acceptable overhead for PyO3 cancellation.
+ - All triggers and guards generate [`log`](https://crates.io/crates/log) messages (`trace` for normal operation, 
+   `warn` for issues where panic can be avoided).
 
 ### Simple example
 
@@ -98,19 +100,19 @@ hash::synchronous; (data=1024, liveness=false)           4.0006 µs
 hash::async::tokio; (data=1024, liveness=false)          17.076 µs
 
 hash::cancellable:none; (data=1024, liveness=false)      4.0369 µs
-hash::cancellable:none; (data=1024, liveness=true)       31.116 µs
+hash::cancellable:none; (data=1024, liveness=true)       7.6464 µs
 
 hash:::cancellable::atomic; (data=1024, liveness=false)  4.9599 µs
-hash:::cancellable::atomic; (data=1024, liveness=true)   31.669 µs
+hash:::cancellable::atomic; (data=1024, liveness=true)   7.6691 µs
 
 hash:::cancellable::timeout; (data=1024, liveness=false) 4.9626 µs
-hash:::cancellable::timeout; (data=1024, liveness=true)  31.698 µs
+hash:::cancellable::timeout; (data=1024, liveness=true)  7.7143 µs
 
 hash:::cancellable::sigint; (data=1024, liveness=false)  4.9717 µs
-hash:::cancellable::sigint; (data=1024, liveness=true)   31.724 µs
+hash:::cancellable::sigint; (data=1024, liveness=true)   7.7038 µs
 
 hash:::cancellable::python; (data=1024, liveness=false)  79.738 µs
-hash:::cancellable::python; (data=1024, liveness=true)   98.793 µs
+hash:::cancellable::python; (data=1024, liveness=true)   82.695 µs
 ```
 
 To run the benchmarks locally, simply use `cargo bench --all-features` (with liveness turned on) or 

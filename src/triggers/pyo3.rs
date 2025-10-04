@@ -83,8 +83,14 @@ lazy_static! {
 /// more granular than `1ms` is not supported.
 ///
 /// See also [`crate::on_python`].
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone)]
 pub struct CancelPython(u64);
+
+impl Default for CancelPython {
+    fn default() -> Self {
+        CancelPython(PYTHON_GLOBAL_MONITOR.load(Ordering::SeqCst))
+    }
+}
 
 impl CancellationTrigger for CancelPython {
     fn is_cancelled(&self) -> bool {

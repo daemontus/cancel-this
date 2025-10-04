@@ -1,6 +1,7 @@
 [![Crates.io](https://img.shields.io/crates/v/cancel-this?style=flat-square)](https://crates.io/crates/cancel-this)
 [![Api Docs](https://img.shields.io/badge/docs-api-yellowgreen?style=flat-square)](https://docs.rs/cancel-this/)
-[![Continuous integration](https://img.shields.io/github/actions/workflow/status/daemontus/cancel-this/build.yml?branch=main&style=flat-square)](https://github.com/daemontus/cancel-this/actions?query=workflow%3Abuild)
+[![Continuous integration](https://img.shields.io/github/actions/workflow/status/daemontus/cancel-this/build.yml?branch=main&style=flat-square)](https://github.com/daemontus/cancel-this/actions/workflows/build.yml)
+[![Benchmarks](https://img.shields.io/github/actions/workflow/status/daemontus/cancel-this/bench_base.yml?branch=main&style=flat-square&label=bench)](https://bencher.dev/perf/cancel-this/)
 [![Coverage](https://img.shields.io/codecov/c/github/daemontus/cancel-this?style=flat-square)](https://codecov.io/gh/daemontus/cancel-this)
 [![GitHub issues](https://img.shields.io/github/issues/daemontus/cancel-this?style=flat-square)](https://github.com/daemontus/cancel-this/issues)
 [![GitHub last commit](https://img.shields.io/github/last-commit/daemontus/cancel-this?style=flat-square)](https://github.com/daemontus/cancel-this/commits/main)
@@ -50,21 +51,67 @@ use std::time::Duration;
 use cancel_this::{Cancellable, is_cancelled};
 
 fn cancellable_counter(count: usize) -> Cancellable<()> {
-    for _ in 0..count {
-        is_cancelled!()?;
-        std::thread::sleep(Duration::from_millis(10));
-    }
-    Ok(())
+   for _ in 0..count {
+      is_cancelled!()?;
+      std::thread::sleep(Duration::from_millis(10));
+   }
+   Ok(())
 }
 
 fn main() {
-    let result: Cancellable<()> = cancel_this::on_timeout(Duration::from_secs(1), || {
-        cancellable_counter(5)?;
-        cancellable_counter(10)?;
-        cancellable_counter(100)?;
-        Ok(())
-    });
+   let one_s = Duration::from_secs(1);
+   let result: Cancellable<()> = cancel_this::on_timeout(one_s, || {
+      cancellable_counter(5)?;
+      cancellable_counter(10)?;
+      cancellable_counter(100)?;
+      Ok(())
+   });
     
-    assert!(result.is_err());   
+   assert!(result.is_err());   
 }
 ```
+
+### Performance
+
+The overall overhead of adding cancellation checks will **heavily** depend on how often they are performed.
+Under ideal conditions, you don't want to run them too often. However, delaying cancellation too much can make
+your code seem unresponsive. In `./benches`, we provide a benchmark to illustrate the impact of cancellation
+on simple code. Here, we intentionally use cancellation checks too often to gain significant overhead. In your
+own code, it is typically sufficient to run cancellation every few milliseconds.
+
+#### Sample results
+
+Benchmarks with `liveness=true` are running with liveness monitoring (this adds additional overhead). 
+The `synchronous` benchmark is a baseline without any cancellation support. 
+The `async::tokio` benchmark implements cancellation using `async` functions.
+The `cancellable::none` benchmark implements cancellation using `cancel_this`, but with no trigger registered.
+Remaining benchmarks test different "cancellation triggers" implemented in `cancel_this`.
+
+These results were obtained
+on a M2 Max Macbook Pro using `cargo bench` (the exact output is simplified for brevity). Latest results 
+from a more stable desktop environment are also available on [bencher.dev](https://bencher.dev/perf/cancel-this/)
+or in the relevant [CI run](https://github.com/daemontus/cancel-this/actions/workflows/bench_base.yml).
+
+```
+hash::synchronous; (data=1024, liveness=false)           4.0006 µs
+
+hash::async::tokio; (data=1024, liveness=false)          17.076 µs
+
+hash::cancellable:none; (data=1024, liveness=false)      4.0369 µs
+hash::cancellable:none; (data=1024, liveness=true)       31.116 µs
+
+hash:::cancellable::atomic; (data=1024, liveness=false)  4.9599 µs
+hash:::cancellable::atomic; (data=1024, liveness=true)   31.669 µs
+
+hash:::cancellable::timeout; (data=1024, liveness=false) 4.9626 µs
+hash:::cancellable::timeout; (data=1024, liveness=true)  31.698 µs
+
+hash:::cancellable::sigint; (data=1024, liveness=false)  4.9717 µs
+hash:::cancellable::sigint; (data=1024, liveness=true)   31.724 µs
+
+hash:::cancellable::python; (data=1024, liveness=false)  79.738 µs
+hash:::cancellable::python; (data=1024, liveness=true)   98.793 µs
+```
+
+To run the benchmarks locally, simply use `cargo bench --all-features` (with liveness turned on) or 
+`cargo bench --features=ctrlc --features=pyo3` (liveness turned off).

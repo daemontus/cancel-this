@@ -82,12 +82,20 @@ your code seem unresponsive. In `./benches`, we provide a benchmark to illustrat
 on simple code. Here, we intentionally use cancellation checks too often to gain significant overhead. In your
 own code, it is typically sufficient to run cancellation every few milliseconds.
 
+#### Caching cancellation triggers
+
+If you need to check cancellation repeatedly in a performance sensitive piece of code, you might want to 
+sacrifice some ergonomics of `cancel_this` for reduced overhead. In such cases, you can use 
+`cancel_this::active_triggers` to store a "local copy" of all active triggers. You can then pass such triggers
+directly to `is_cancelled!` to avoid a (relatively) costly thread-local variable access.
+
 #### Sample results
 
 Benchmarks with `liveness=true` are running with liveness monitoring (this adds additional overhead). 
 The `synchronous` benchmark is a baseline without any cancellation support. 
 The `async::tokio` benchmark implements cancellation using `async` functions.
 The `cancellable::none` benchmark implements cancellation using `cancel_this`, but with no trigger registered.
+Benchmarks marked as `cached` use a local variable the cache the active triggers.
 Remaining benchmarks test different "cancellation triggers" implemented in `cancel_this`.
 
 These results were obtained
@@ -96,24 +104,28 @@ from a more stable desktop environment are also available on [bencher.dev](https
 or in the relevant [CI run](https://github.com/daemontus/cancel-this/actions/workflows/bench_base.yml).
 
 ```
-hash::synchronous; (data=1024, liveness=false)           4.0006 µs
+hash::synchronous;                                    4.0006 µs
 
-hash::async::tokio; (data=1024, liveness=false)          17.076 µs
+hash::async::tokio;                                   17.076 µs
 
-hash::cancellable:none; (data=1024, liveness=false)      4.0369 µs
-hash::cancellable:none; (data=1024, liveness=true)       7.6464 µs
+hash::cancellable::none; (liveness=false)             4.0369 µs
+hash::cancellable::none; (liveness=true)              7.6464 µs
+hash::cancellable::none::cached; (liveness=false)     4.0020 µs
+hash::cancellable::none::cached; (liveness=true)      4.0214 µs
 
-hash:::cancellable::atomic; (data=1024, liveness=false)  4.9599 µs
-hash:::cancellable::atomic; (data=1024, liveness=true)   7.6691 µs
+hash::cancellable::atomic; (liveness=false)          4.9599 µs
+hash::cancellable::atomic; (liveness=true)           7.6691 µs
+hash::cancellable::atomic::cached; (liveness=false)  4.0318 µs
+hash::cancellable::atomic::cached; (liveness=true)   4.0614 µs
 
-hash:::cancellable::timeout; (data=1024, liveness=false) 4.9626 µs
-hash:::cancellable::timeout; (data=1024, liveness=true)  7.7143 µs
+hash::cancellable::timeout; (liveness=false)         4.9626 µs
+hash::cancellable::timeout; (liveness=true)          7.7143 µs
 
-hash:::cancellable::sigint; (data=1024, liveness=false)  4.9717 µs
-hash:::cancellable::sigint; (data=1024, liveness=true)   7.7038 µs
+hash::cancellable::sigint; (liveness=false)          4.9717 µs
+hash::cancellable::sigint; (liveness=true)           7.7038 µs
 
-hash:::cancellable::python; (data=1024, liveness=false)  79.738 µs
-hash:::cancellable::python; (data=1024, liveness=true)   82.695 µs
+hash::cancellable::python; (liveness=false)          79.738 µs
+hash::cancellable::python; (liveness=true)           82.695 µs
 ```
 
 To run the benchmarks locally, simply use `cargo bench --all-features` (with liveness turned on) or 

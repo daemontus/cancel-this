@@ -57,4 +57,8 @@ impl CancellationTrigger for CancelNever {
     fn is_cancelled(&self) -> bool {
         false
     }
+
+    fn type_name(&self) -> &'static str {
+        "CancelNever"
+    }
 }

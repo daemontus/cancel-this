@@ -67,6 +67,10 @@ impl CancellationTrigger for CancelAtomic {
     fn is_cancelled(&self) -> bool {
         self.0.load(Ordering::SeqCst)
     }
+
+    fn type_name(&self) -> &'static str {
+        "CancelAtomic"
+    }
 }
 
 impl CancelAtomic {

@@ -156,4 +156,8 @@ impl<R: CancellationTrigger + Clone> CancellationTrigger for LivenessInterceptor
         }
         self.0.is_cancelled()
     }
+
+    fn type_name(&self) -> &'static str {
+        self.0.type_name()
+    }
 }

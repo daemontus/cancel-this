@@ -82,6 +82,10 @@ impl CancellationTrigger for CancelCtrlc {
     fn is_cancelled(&self) -> bool {
         self.0.is_cancelled()
     }
+
+    fn type_name(&self) -> &'static str {
+        "CancelCtrlc"
+    }
 }
 
 impl Default for CancelCtrlc {

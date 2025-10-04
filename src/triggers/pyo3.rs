@@ -57,7 +57,7 @@ impl CancellationTrigger for CancelPython {
     }
 
     fn type_name(&self) -> &'static str {
-        std::any::type_name::<CancelPython>()
+        "CancelPython"
     }
 }
 

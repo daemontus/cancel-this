@@ -21,7 +21,7 @@ impl CancellationTrigger for CancelChain {
             .rev()
             .find(|t| t.is_cancelled())
             .map(|it| it.type_name())
-            .expect("Calling `cause` before the trigger is cancelled.")
+            .unwrap_or("CancelChain")
     }
 }
 

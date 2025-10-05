@@ -9,7 +9,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 /// ```rust
 /// # use std::time::Duration;
 /// # use cancel_this::{is_cancelled, CancelAtomic, Cancelled};
-///
+/// # let _ = env_logger::builder().is_test(true).try_init();
 /// fn cancellable_counter(count: usize) -> Result<(), Cancelled> {
 ///     for _ in 0..count {
 ///         is_cancelled!()?;
@@ -92,7 +92,7 @@ impl CancelAtomic {
             trace!("`CancelAtomic[{:p}]` cancelled.", self.id_ref());
         } else {
             // The atomic swap can only fail if the value is already `true`.
-            trace!("`CancelAtomic[{:p}]` already cancelled.`", self.id_ref());
+            trace!("`CancelAtomic[{:p}]` already cancelled.", self.id_ref());
         }
     }
 

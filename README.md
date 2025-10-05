@@ -95,7 +95,7 @@ Benchmarks with `liveness=true` are running with liveness monitoring (this adds 
 The `synchronous` benchmark is a baseline without any cancellation support. 
 The `async::tokio` benchmark implements cancellation using `async` functions.
 The `cancellable::none` benchmark implements cancellation using `cancel_this`, but with no trigger registered.
-Benchmarks marked as `cached` use a local variable the cache the active triggers.
+Benchmarks marked as `cached` use a local variable to cache the active triggers.
 Remaining benchmarks test different "cancellation triggers" implemented in `cancel_this`.
 
 These results were obtained

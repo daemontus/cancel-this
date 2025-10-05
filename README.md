@@ -39,8 +39,8 @@ by a macro anywhere in your code.
  - With feature `liveness` enabled, you can register a per-thread handler invoked
    once the thread becomes unresponsive (i.e. cancellation is not checked periodically
    withing the desired interval).
- - Practically no overhead in cancellable code when cancellation is not enabled.
- - Very small overhead for "atomic-based" cancellation triggers, acceptable overhead for PyO3 cancellation.
+ - Practically no overhead in cancellable code when cancellation is not actively used.
+ - Very small overhead for "atomic-based" cancellation triggers and PyO3 cancellation.
  - All triggers and guards generate [`log`](https://crates.io/crates/log) messages (`trace` for normal operation, 
    `warn` for issues where panic can be avoided).
 
@@ -124,8 +124,11 @@ hash::cancellable::timeout; (liveness=true)          7.7143 µs
 hash::cancellable::sigint; (liveness=false)          4.9717 µs
 hash::cancellable::sigint; (liveness=true)           7.7038 µs
 
-hash::cancellable::python; (liveness=false)          79.738 µs
-hash::cancellable::python; (liveness=true)           82.695 µs
+# Tested in simulated environment; results using actuall Python
+# interpreter will be slightly worse, depending on the interpreter.
+
+hash::cancellable::python; (liveness=false)          7.3912 µs
+hash::cancellable::python; (liveness=true)           7.8942 µs
 ```
 
 To run the benchmarks locally, simply use `cargo bench --all-features` (with liveness turned on) or 

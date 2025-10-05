@@ -26,6 +26,7 @@ thread_local! {
 /// # use std::sync::atomic::{AtomicBool, Ordering};
 /// # use std::time::Duration;
 /// # use cancel_this::{LivenessGuard, is_cancelled, Cancellable};
+/// # env_logger::init();
 /// let expect_alive = Arc::new(AtomicBool::new(true));
 ///
 /// let expect_alive_guard = expect_alive.clone();
@@ -52,7 +53,6 @@ thread_local! {
 ///     }
 ///     Ok(())
 /// });
-///
 /// ```
 pub struct LivenessGuard {
     monitor_thread: Option<JoinHandle<()>>,

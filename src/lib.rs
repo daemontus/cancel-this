@@ -41,6 +41,7 @@
 //! ```rust
 //! # use std::time::Duration;
 //! # use cancel_this::{Cancellable, is_cancelled};
+//! # env_logger::init();
 //! fn cancellable_counter(count: usize) -> Cancellable<()> {
 //!     for _ in 0..count {
 //!         is_cancelled!()?;
@@ -67,6 +68,7 @@
 //! ```rust
 //! # use std::time::Duration;
 //! # use cancel_this::{Cancelled, is_cancelled, LivenessGuard};
+//! # env_logger::init();
 //! enum ComputeError {
 //!     Zero,
 //!     Cancelled
@@ -130,6 +132,7 @@
 //! # use std::thread::JoinHandle;
 //! # use std::time::Duration;
 //! # use cancel_this::{is_cancelled, Cancellable, LivenessGuard};
+//! # env_logger::init();
 //! let guard = LivenessGuard::new(Duration::from_millis(10), |is_alive| {
 //!     // In this test, the liveness guard should never trigger, even though the original
 //!     // thread goes to sleep for a long time, waiting to join with the spawned thread.
@@ -166,6 +169,7 @@
 //! # use std::thread::JoinHandle;
 //! # use std::time::Duration;
 //! # use cancel_this::{is_cancelled, Cancellable, LivenessGuard};
+//! # env_logger::init();
 //! let guard = LivenessGuard::new(Duration::from_millis(10), |is_alive| {
 //!     // In this test, the liveness guard should never trigger, even though the original
 //!     // thread goes to sleep for a long time, waiting to join with the spawned thread.
@@ -202,6 +206,7 @@
 //! ```rust
 //! # use std::time::Duration;
 //! # use cancel_this::{is_cancelled, Cancellable};
+//! # env_logger::init();
 //! let result: Cancellable<u32> = cancel_this::on_timeout(Duration::from_millis(100), || {
 //!     let cache = cancel_this::active_triggers();
 //!     let mut result = 0u32;
@@ -214,7 +219,7 @@
 //!     }
 //!     Ok(result)
 //! });
-//! assert!(result.is_err())
+//! assert!(result.is_err());
 //! ```
 //!
 

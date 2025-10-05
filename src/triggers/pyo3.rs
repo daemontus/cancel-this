@@ -1,6 +1,6 @@
 use crate::{CancelAtomic, CancellationTrigger, Cancelled};
 use lazy_static::lazy_static;
-use log::warn;
+use log::{trace, warn};
 use pyo3::exceptions::{PyInterruptedError, PyKeyboardInterrupt};
 use pyo3::prelude::PyAnyMethods;
 use pyo3::{PyErr, PyResult, Python};
@@ -31,6 +31,7 @@ use std::sync::atomic::{AtomicU64, Ordering};
 /// # use cancel_this::{is_cancelled, Cancellable};
 /// # use std::time::Duration;
 /// # use pyo3::{pyfunction, PyResult, Python};
+/// # env_logger::init();
 /// // Calling cancellable counter from python should support cancellation using normal
 /// // Python interrupts.
 /// #[pyfunction]
@@ -52,15 +53,16 @@ use std::sync::atomic::{AtomicU64, Ordering};
 /// // so interrupts can't *really* be checked.
 /// pyo3::Python::initialize();
 ///
-/// let result_fast = cancel_this::on_python(|| {
-///     cancel_this::on_timeout(Duration::from_millis(100), || cancellable_counter(5))
-/// });
+/// let result_fast = cancel_this::on_timeout(Duration::from_millis(100), || cancellable_counter(5));
 /// assert!(result_fast.is_ok());
 ///
-/// let result_slow = cancel_this::on_python(|| {
-///     cancel_this::on_timeout(Duration::from_millis(100), || cancellable_counter(50))
-/// });
+/// let result_slow = cancel_this::on_timeout(Duration::from_millis(100), || cancellable_counter(50));
 /// assert!(result_slow.is_err());
+///
+/// // This should emit a warning log entry:
+/// std::thread::spawn(|| {
+///     cancellable_counter(5).unwrap();
+/// }).join();
 /// ```
 pub fn on_python<R, E, Action>(action: Action) -> Result<R, E>
 where
@@ -141,6 +143,10 @@ impl CancellationTrigger for CancelPython {
                     Python::try_attach(|py| py.check_signals().is_err()).unwrap_or_default();
 
                 if is_cancelled {
+                    trace!(
+                        "`CancelPython[{:p}]` detected cancellation signal.",
+                        self.1.id_ref()
+                    );
                     self.1.cancel();
                     return true;
                 }

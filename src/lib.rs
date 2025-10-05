@@ -28,10 +28,10 @@
 //! - With feature `liveness` enabled, you can register a per-thread handler invoked
 //!   once the thread becomes unresponsive (i.e. cancellation is not checked periodically
 //!   withing the desired interval).
-//! - Practically no overhead in cancellable code when cancellation is not enabled.
-//! - Very small overhead for "atomic-based" cancellation triggers, acceptable overhead for PyO3 cancellation.
-//! - All triggers and guards generate [`log`](https://crates.io/crates/log) messages (`trace` for normal operation,
-//!   `warn` for issues where panic can be avoided).
+//! - Practically no overhead in cancellable code when cancellation is not actively used.
+//! - Very small overhead for "atomic-based" cancellation triggers and PyO3 cancellation.
+//! - All triggers and guards generate [`log`](https://crates.io/crates/log) messages
+//!   (`trace` for normal operation, `warn` for issues where panic can be avoided).
 //!
 //!
 //! ### Simple example

@@ -39,9 +39,8 @@
 //! A simple counter that is eventually cancelled by a one-second timeout:
 //!
 //! ```rust
-//! use std::time::Duration;
-//! use cancel_this::{Cancellable, is_cancelled};
-//!
+//! # use std::time::Duration;
+//! # use cancel_this::{Cancellable, is_cancelled};
 //! fn cancellable_counter(count: usize) -> Cancellable<()> {
 //!     for _ in 0..count {
 //!         is_cancelled!()?;
@@ -66,9 +65,8 @@
 //! and liveness monitoring.
 //!
 //! ```rust
-//! use std::time::Duration;
-//! use cancel_this::{Cancelled, is_cancelled, LivenessGuard};
-//!
+//! # use std::time::Duration;
+//! # use cancel_this::{Cancelled, is_cancelled, LivenessGuard};
 //! enum ComputeError {
 //!     Zero,
 //!     Cancelled
@@ -132,7 +130,6 @@
 //! # use std::thread::JoinHandle;
 //! # use std::time::Duration;
 //! # use cancel_this::{is_cancelled, Cancellable, LivenessGuard};
-//!
 //! let guard = LivenessGuard::new(Duration::from_millis(10), |is_alive| {
 //!     // In this test, the liveness guard should never trigger, even though the original
 //!     // thread goes to sleep for a long time, waiting to join with the spawned thread.
@@ -169,7 +166,6 @@
 //! # use std::thread::JoinHandle;
 //! # use std::time::Duration;
 //! # use cancel_this::{is_cancelled, Cancellable, LivenessGuard};
-//!
 //! let guard = LivenessGuard::new(Duration::from_millis(10), |is_alive| {
 //!     // In this test, the liveness guard should never trigger, even though the original
 //!     // thread goes to sleep for a long time, waiting to join with the spawned thread.

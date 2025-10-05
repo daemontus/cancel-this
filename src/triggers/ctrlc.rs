@@ -9,7 +9,6 @@ use std::sync::Mutex;
 /// ```rust
 /// # use std::time::Duration;
 /// # use cancel_this::{Cancelled, is_cancelled};
-///
 /// fn cancellable_counter(count: usize) -> Result<(), Cancelled> {
 ///     for _ in 0..count {
 ///         is_cancelled!()?;

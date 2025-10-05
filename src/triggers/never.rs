@@ -13,7 +13,7 @@ use crate::{CancelChain, CancellationTrigger, Cancelled, TRIGGER};
 /// ```rust
 /// # use std::time::Duration;
 /// # use cancel_this::{is_cancelled, CancelAtomic, Cancelled};
-/// # env_logger::init();
+/// # let _ = env_logger::builder().is_test(true).try_init();
 /// fn cancellable_counter(count: usize) -> Result<(), Cancelled> {
 ///     for _ in 0..count {
 ///         is_cancelled!()?;

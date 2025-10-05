@@ -31,7 +31,7 @@ use std::sync::atomic::{AtomicU64, Ordering};
 /// # use cancel_this::{is_cancelled, Cancellable};
 /// # use std::time::Duration;
 /// # use pyo3::{pyfunction, PyResult, Python};
-/// # env_logger::init();
+/// # let _ = env_logger::builder().is_test(true).try_init();
 /// // Calling cancellable counter from python should support cancellation using normal
 /// // Python interrupts.
 /// #[pyfunction]

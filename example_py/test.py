@@ -1,4 +1,4 @@
-from example_py import hash_data, hash_data_unsafe, Liveness
+from example_py import hash_data, hash_data_unchecked, Liveness
 import time
 
 data = [ x for x in range(1 << 12) ]

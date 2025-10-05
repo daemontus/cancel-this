@@ -124,7 +124,7 @@ hash::cancellable::timeout; (liveness=true)          7.7143 µs
 hash::cancellable::sigint; (liveness=false)          4.9717 µs
 hash::cancellable::sigint; (liveness=true)           7.7038 µs
 
-# Tested in simulated environment; results using actuall Python
+# Tested in simulated environment; results using actual Python
 # interpreter will be slightly worse, depending on the interpreter.
 
 hash::cancellable::python; (liveness=false)          7.3912 µs

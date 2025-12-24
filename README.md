@@ -11,7 +11,7 @@
 
 This crate provides a user-friendly way to implement cooperative 
 cancellation in Rust based on a wide range of criteria, including
-*triggers*, *timers*, *OS signals* (Ctrl+C), or the *Python 
+*triggers*, *timers*, *OS signals* (Ctrl+C), *memory limit*, or the *Python 
 interpreter linked using PyO3*. It also provides liveness monitoring
 of "cancellation aware" code.
 
@@ -42,6 +42,7 @@ by a macro anywhere in your code.
  - Out-of-the-box support for triggers based on atomics and timers.
  - With feature `ctrlc` enabled, support for cancellation using `SIGINT` signals.
  - With feature `pyo3` enabled, support for cancellation using `Python::check_signals`.
+ - With feature `memory` enabled, support for cancellation based on memory consumption returned by `memory-stats`.
  - With feature `liveness` enabled, you can register a per-thread handler invoked
    once the thread becomes unresponsive (i.e., cancellation is not checked periodically
    withing the desired interval).
@@ -130,6 +131,9 @@ hash::cancellable::timeout; (liveness=true)          7.7143 µs
 hash::cancellable::sigint; (liveness=false)          4.9717 µs
 hash::cancellable::sigint; (liveness=true)           7.7038 µs
 
+hash::cancellable::memory; (liveness=true)           535.34 µs
+hash::cancellable::memory; (liveness=false)          533.16 µs
+
 # Tested in simulated environment; results using actual Python
 # interpreter will be slightly worse, depending on the interpreter.
 
@@ -138,4 +142,4 @@ hash::cancellable::python; (liveness=true)           7.8942 µs
 ```
 
 To run the benchmarks locally, simply use `cargo bench --all-features` (with liveness turned on) or 
-`cargo bench --features=ctrlc --features=pyo3` (liveness turned off).
+`cargo bench --features=ctrlc --features=pyo3 --features=memory` (liveness turned off).

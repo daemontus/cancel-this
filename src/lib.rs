@@ -1,6 +1,6 @@
 //! This crate provides a user-friendly way to implement cooperative
 //! cancellation in Rust based on a wide range of criteria, including
-//! *triggers*, *timers*, *OS signals* (Ctrl+C), or the *Python
+//! *triggers*, *timers*, *OS signals* (Ctrl+C), *memory limit*, or the *Python
 //! interpreter linked using PyO3*. It also provides liveness monitoring
 //! of "cancellation aware" code.
 //!
@@ -25,6 +25,7 @@
 //! - Out-of-the-box support for triggers based on atomics and timers.
 //! - With feature `ctrlc` enabled, support for cancellation using `SIGINT` signals.
 //! - With feature `pyo3` enabled, support for cancellation using `Python::check_signals`.
+//! - With feature `memory` enabled, support for cancellation based on memory consumption returned by `memory-stats`.
 //! - With feature `liveness` enabled, you can register a per-thread handler invoked
 //!   once the thread becomes unresponsive (i.e., cancellation is not checked periodically
 //!   withing the desired interval).

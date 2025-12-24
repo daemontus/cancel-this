@@ -16,6 +16,8 @@ license = "MIT"
 ctrlc = ["dep:ctrlc"]
 # Allows using PyO3 trigger
 pyo3 = ["dep:pyo3"]
+# Allow memory-limit trigger
+memory = ["dep:memory-stats"]
 # Allows monitoring the regularity of cancellation checks
 liveness = []
 
@@ -25,6 +27,8 @@ log = "0.4"
 lazy_static = "1.5"
 ctrlc = { version = "3.5.1", optional = true }
 pyo3 = { version = "0.27", optional = true }
+# The "always_use_statm" feature should prioritize speed over accuracy.
+memory-stats = { version = "1.2", optional = true, features = ["always_use_statm"] }
 
 [dev-dependencies]
 libc = "0.2.176"

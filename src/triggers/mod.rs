@@ -12,6 +12,11 @@ pub use never::*;
 mod atomic;
 pub use atomic::*;
 
+#[cfg(feature = "memory")]
+mod memory;
+#[cfg(feature = "memory")]
+pub use memory::*;
+
 #[cfg(feature = "ctrlc")]
 mod ctrlc;
 #[cfg(feature = "ctrlc")]

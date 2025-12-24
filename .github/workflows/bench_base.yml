@@ -36,4 +36,4 @@ jobs:
           --err \
           --adapter rust_criterion \
           --github-actions '${{ secrets.GITHUB_TOKEN }}' \
-          "cargo bench --features=ctrlc --features=pyo3; cargo bench --features=ctrlc --features=pyo3 --features=liveness"
+          "cargo bench --features=ctrlc --features=pyo3 --features=memory; cargo bench --features=ctrlc --features=pyo3 --features=memory --features=liveness"

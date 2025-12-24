@@ -37,7 +37,7 @@ impl CancelChain {
         self.0.push(Box::new(trigger));
     }
 
-    /// Make a copy of this trigger chain, but if the chain is empty, or only has a single element,
+    /// Make a copy of this trigger chain, but if the chain is empty or only has a single element,
     /// replace it with a simplified trigger which does not need vector traversal.
     pub fn clone_and_flatten(&self) -> DynamicCancellationTrigger {
         if self.0.is_empty() {
@@ -68,7 +68,7 @@ mod tests {
         assert_eq!(chain.type_name(), "CancelChain");
         assert_eq!(chain.clone_and_flatten().type_name(), "CancelAtomic");
 
-        // Two element chain flattens to chain.
+        // Two-element chain flattens to chain.
         let timer = CancelTimer::start(Duration::from_secs(1));
         chain.push(timer);
         assert_eq!(chain.type_name(), "CancelChain");

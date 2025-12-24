@@ -16,17 +16,17 @@
 //! to pass the cancellation token around and generally do not make it easy to
 //! combine the effects of multiple tokens. In `cancel_this`, the goal was to
 //! make cancellation dead simple: You register however many cancellation triggers
-//! you want, each trigger is valid within a specific scope (and thread), and can be checked
+//! you want, each trigger is valid within a specific scope (and thread) and can be checked
 //! by a macro anywhere in your code.
 //!
 //! ### Current features
 //!
 //! - Scoped cancellation using thread-local "cancellation triggers".
-//! - Out-of-the box support for triggers based on atomics and timers.
+//! - Out-of-the-box support for triggers based on atomics and timers.
 //! - With feature `ctrlc` enabled, support for cancellation using `SIGINT` signals.
 //! - With feature `pyo3` enabled, support for cancellation using `Python::check_signals`.
 //! - With feature `liveness` enabled, you can register a per-thread handler invoked
-//!   once the thread becomes unresponsive (i.e. cancellation is not checked periodically
+//!   once the thread becomes unresponsive (i.e., cancellation is not checked periodically
 //!   withing the desired interval).
 //! - Practically no overhead in cancellable code when cancellation is not actively used.
 //! - Very small overhead for "atomic-based" cancellation triggers and PyO3 cancellation.
@@ -179,7 +179,7 @@
 //! let result: Cancellable<u32> = cancel_this::on_timeout(Duration::from_millis(100), || {
 //!     let t1: JoinHandle<Cancellable<u32>> = std::thread::spawn(|| {
 //!         let mut result = 0u32;
-//!         // This cycle is never going to get cancelled, because we didn't transfer
+//!         // This cycle is never going to get cancelled because we didn't transfer
 //!         // the timeout trigger from the original thread.
 //!         for i in 0..50 {
 //!             result += 1;
@@ -199,8 +199,8 @@
 //!
 //! If you need the absolute lowest overhead, you might want to sacrifice some of the
 //! ergonomics provided by `cancel_this`. To reduce overhead, you can create a local copy
-//! of the thread-local triggers the same way as in the multithreaded example, and use it
-//! directly with `is_cancelled!`. This significantly reduces the overhead of each
+//! of the thread-local triggers the same way as in the multithreaded example and use it
+//! directly with `is_cancelled`. This significantly reduces the overhead of each
 //! cancellation check.
 //!
 //! ```rust
@@ -211,7 +211,7 @@
 //!     let cache = cancel_this::active_triggers();
 //!     let mut result = 0u32;
 //!     while true {
-//!         // The overhead of this `is_cancelled` call is reduced, because triggers
+//!         // The overhead of this `is_cancelled` call is reduced because triggers
 //!         // are cached in a local variable. However, the cache is only valid within
 //!         // the scope where it was obtained.
 //!         is_cancelled!(cache)?;
@@ -281,8 +281,8 @@ pub const UNKNOWN_CAUSE: &str = "UnknownCancellationTrigger";
 thread_local! {
     /// The correct usage of this value lies in the fact that references to the `CancelChain`
     /// will never leak out of this crate (we can hand out copies to the downstream users).
-    /// Within the crate, the triggers are either read when checking cancellation status, or
-    /// written when entering/leaving scope. However, these two actions are never performed
+    /// Within the crate, the triggers are either read when checking cancellation status or
+    /// written when entering/leaving the scope. However, these two actions are never performed
     /// simultaneously.
     static TRIGGER: RefCell<LivenessInterceptor<CancelChain>> = RefCell::new(LivenessInterceptor::default());
 }
@@ -324,14 +324,14 @@ pub fn check_local_cancellation() -> Result<(), Cancelled> {
 /// Get a snapshot of the current thread-local cancellation trigger.
 ///
 /// This value can be either used to initialize triggers in a new thread using [`on_trigger`],
-/// or used directly as argument to the [`is_cancelled`] macro to speed up cancellation checks.
+/// or used directly as an argument to the [`is_cancelled`] macro to speed up cancellation checks.
 pub fn active_triggers() -> DynamicCancellationTrigger {
     TRIGGER.with_borrow(|trigger| trigger.clone_and_flatten())
 }
 
 /// Run the `action` in a context where a cancellation can be signaled using the given `trigger`.
 ///
-/// Once the action is completed, the trigger is de-registered and does not apply
+/// Once the action is completed, the trigger is deregistered and does not apply
 /// to further code execution.
 pub fn on_trigger<TResult, TError, TCancel, TAction>(
     trigger: TCancel,

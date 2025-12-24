@@ -28,7 +28,7 @@ pub use pyo3::*;
 /// can be safely cloned.
 ///
 /// **The expectation is that cloning a cancellation trigger produces an object that reacts to
-/// the same signal, i.e. is cancelled if and only if the original object is cancelled.**
+/// the same signal, i.e., is cancelled if and only if the original object is cancelled.**
 ///
 pub trait CancellationTrigger: Send + Sync + DynClone {
     /// Returns true if this trigger is cancelled.

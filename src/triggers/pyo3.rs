@@ -12,7 +12,7 @@ use std::sync::atomic::{AtomicU64, Ordering};
 ///
 /// **Error handling:** When the `pyo3` feature is enabled, [`Cancelled`] can be
 /// automatically converted to [`PyInterruptedError`], so [`crate::is_cancelled`] should work
-/// in all functions returning [`pyo3::PyResult`].
+/// in all functions returning [`PyResult`].
 ///
 /// **Multi-threading:** Using [`CancelPython`] only *works* if cancellation is checked on the
 /// *main thread* of the Python interpreter. As such, Python cancellation is not truly "thread
@@ -49,7 +49,7 @@ use std::sync::atomic::{AtomicU64, Ordering};
 /// // that's really hard to do in these tests, so we try the next best thing.
 ///
 /// // Interpreter needs to be initialized if we are to check signals on it.
-/// // Still, this initialization method does not actually create any "main thread",
+/// // Still, this initialization method does not create any "main thread",
 /// // so interrupts can't *really* be checked.
 /// pyo3::Python::initialize();
 ///
@@ -106,11 +106,11 @@ thread_local! {
 }
 
 /// Implementation of [`CancellationTrigger`] that is cancelled by a PyO3 Python signal
-/// (see also [`Python::check_signals`]). To reduce overhead, current implementation only
+/// (see also [`Python::check_signals`]). To reduce overhead, the current implementation only
 /// calls [`Python::check_signals`] at most once every millisecond, meaning cancellation
 /// more granular than `1ms` is not supported.
 ///
-/// See also [`crate::on_python`].
+/// See also [`on_python`].
 #[derive(Debug, Clone)]
 pub struct CancelPython(Arc<AtomicU64>, CancelAtomic);
 
@@ -173,7 +173,7 @@ impl From<Cancelled> for PyErr {
 
 /// Uses Python API to detect if the current code is running on the main thread.
 ///
-/// This is a relatively costly operation and its results should probably be cached
+/// This is a relatively costly operation, and its results should probably be cached
 /// as much as possible.
 fn check_main_thread() -> bool {
     fn check(py: Python) -> PyResult<bool> {

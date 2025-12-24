@@ -24,7 +24,7 @@ use crate::{CancelChain, CancellationTrigger, Cancelled, TRIGGER};
 ///
 /// let trigger = CancelAtomic::new();
 /// let _ = cancel_this::on_atomic(trigger.clone(), || {
-///     // The first call should be ok, because the trigger is not cancelled yet.
+///     // The first call should be ok because the trigger is not cancelled yet.
 ///     cancellable_counter(5).unwrap();
 ///     // Now we explicitly cancel the trigger.
 ///     trigger.cancel();
@@ -51,7 +51,7 @@ where
 
 /// Implementation of [`CancellationTrigger`] that is never cancelled.
 ///
-/// See also [`crate::never`].
+/// See also [`never`].
 #[derive(Debug, Clone, Copy, Default)]
 pub struct CancelNever;
 

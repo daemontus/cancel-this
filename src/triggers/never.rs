@@ -2,10 +2,10 @@ use crate::liveness::LivenessInterceptor;
 use crate::{CancelChain, CancellationTrigger, Cancelled, TRIGGER};
 
 /// Run the given `action` by overriding current cancellation criteria with [`CancelNever`],
-/// meaning they do not apply and the action is never cancelled.
+/// meaning they do not apply and the action is never canceled.
 ///
 /// This method is only meaningful if you want to use the same code with and without cancellation.
-/// Code that never needs to be cancelled can simply never check cancellation.
+/// Code that never needs to be canceled can simply never check cancellation.
 ///
 /// Any cancellation triggers that are registered *within* this context still do apply to their
 /// respective scopes.
@@ -24,13 +24,13 @@ use crate::{CancelChain, CancellationTrigger, Cancelled, TRIGGER};
 ///
 /// let trigger = CancelAtomic::new();
 /// let _ = cancel_this::on_atomic(trigger.clone(), || {
-///     // The first call should be ok because the trigger is not cancelled yet.
+///     // The first call should be ok because the trigger is not canceled yet.
 ///     cancellable_counter(5).unwrap();
 ///     // Now we explicitly cancel the trigger.
 ///     trigger.cancel();
 ///     // However, if running in the `never` scope, the cancellation does not apply.
 ///     cancel_this::never(|| cancellable_counter(5)).unwrap();
-///     // Any other action outside the `never` scope is still cancelled.
+///     // Any other action outside the `never` scope is still canceled.
 ///     let result = cancellable_counter(5);
 ///     assert!(result.is_err());
 ///     result
@@ -49,7 +49,7 @@ where
     result
 }
 
-/// Implementation of [`CancellationTrigger`] that is never cancelled.
+/// Implementation of [`CancellationTrigger`] that is never canceled.
 ///
 /// See also [`never`].
 #[derive(Debug, Clone, Copy, Default)]

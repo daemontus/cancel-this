@@ -74,7 +74,7 @@ mod tests {
         assert_eq!(chain.type_name(), "CancelChain");
         assert_eq!(chain.clone_and_flatten().type_name(), "CancelChain");
 
-        // Once cancelled, the name resolves to the cancelled trigger.
+        // Once canceled, the name resolves to the canceled trigger.
         trigger.cancel();
         assert_eq!(chain.type_name(), "CancelAtomic");
         assert_eq!(chain.clone_and_flatten().type_name(), "CancelAtomic");

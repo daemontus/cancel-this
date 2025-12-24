@@ -36,7 +36,7 @@
 //!
 //! ### Simple example
 //!
-//! A simple counter that is eventually cancelled by a one-second timeout:
+//! A simple counter that is eventually canceled by a one-second timeout:
 //!
 //! ```rust
 //! # use std::time::Duration;
@@ -106,11 +106,11 @@
 //!     })?;
 //!
 //!     assert_eq!(r1.as_str(), "25");
-//!     // This will be cancelled. Instead of using `?`, we check
-//!     // that the operation actually got cancelled.
+//!     // This will be canceled. Instead of using `?`, we check
+//!     // that the operation actually got canceled.
 //!     let r2 = compute(20);
 //!     assert!(matches!(r2, Err(ComputeError::Cancelled)));
-//!     // Even though the execution is now cancelled, we can still execute code in
+//!     // Even though the execution is now canceled, we can still execute code in
 //!     // the "cancel-never" blocks.
 //!     let r3 = cancel_this::never(|| compute(10))?;
 //!     assert_eq!(r3.as_str(), "100");
@@ -144,7 +144,7 @@
 //!     let t1: JoinHandle<Cancellable<u32>> = std::thread::spawn(|| {
 //!         cancel_this::on_trigger(active, || {
 //!             let mut result = 0u32;
-//!             // This cycle is eventually going to get cancelled
+//!             // This cycle is eventually going to get canceled
 //!             // by the timer which is "transferred" from the spawning thread.
 //!             for i in 0..50 {
 //!                 result += 1;
@@ -163,7 +163,7 @@
 //!
 //! Doing the same without transferring cancellation triggers will cause the spawning
 //! thread to be registered as unresponsive and the compute thread to never actually get
-//! cancelled:
+//! canceled:
 //!
 //! ```rust
 //! # use std::thread::JoinHandle;
@@ -179,7 +179,7 @@
 //! let result: Cancellable<u32> = cancel_this::on_timeout(Duration::from_millis(100), || {
 //!     let t1: JoinHandle<Cancellable<u32>> = std::thread::spawn(|| {
 //!         let mut result = 0u32;
-//!         // This cycle is never going to get cancelled because we didn't transfer
+//!         // This cycle is never going to get canceled because we didn't transfer
 //!         // the timeout trigger from the original thread.
 //!         for i in 0..50 {
 //!             result += 1;
@@ -312,7 +312,7 @@ pub fn check_cancellation<TCancel: CancellationTrigger>(
     }
 }
 
-/// Check if the current thread-local cancellation trigger is cancelled. In typical situations,
+/// Check if the current thread-local cancellation trigger is canceled. In typical situations,
 /// you don't use this method directly, but instead use the [`is_cancelled`] macro.
 ///
 /// To avoid a repeated borrow of the thread-local value in performance-sensitive applications,

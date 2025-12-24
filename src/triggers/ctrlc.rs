@@ -29,7 +29,7 @@ use std::sync::Mutex;
 /// let result_fast = cancel_this::on_sigint(|| cancellable_counter(3));
 /// assert!(result_fast.is_ok());
 ///
-/// // The second action is slow and will be cancelled by SIGINT.
+/// // The second action is slow and will be canceled by SIGINT.
 /// let result_slow = cancel_this::on_sigint(|| cancellable_counter(50));
 /// assert!(result_slow.is_err());
 /// ```
@@ -65,7 +65,7 @@ lazy_static! {
     });
 }
 
-/// Implementation of [`CancellationTrigger`] that is cancelled when SIGINT (Ctrl+C)
+/// Implementation of [`CancellationTrigger`] that is canceled when SIGINT (Ctrl+C)
 /// is triggered.
 ///
 /// This uses the `ctrlc` crate to observe the SIGINT events. As such, it
@@ -76,7 +76,7 @@ lazy_static! {
 ///
 /// ## Logging
 ///  - [`trace`] Every time the SIGINT event is processed, the number of affected triggers
-///    is listed. Each trigger should also produce a message once actually cancelled.
+///    is listed. Each trigger should also produce a message once actually canceled.
 #[derive(Debug, Clone)]
 pub struct CancelCtrlc(CancelAtomic);
 

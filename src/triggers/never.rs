@@ -51,7 +51,7 @@ where
 
 /// Implementation of [`CancellationTrigger`] that is never canceled.
 ///
-/// See also [`never`].
+/// See also [`never()`].
 #[derive(Debug, Clone, Copy, Default)]
 pub struct CancelNever;
 

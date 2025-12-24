@@ -128,7 +128,17 @@ fn criterion_benchmark(c: &mut Criterion) {
     });
     assert!(r.is_ok());
 
-    // Check cancellation using Python interpreter.
+    // Check cancellation using memory.
+    let r: Cancellable<()> = cancel_this::on_memory(100_000_000, || {
+        c.bench_function(
+            format!("{bench_prefix}::cancellable::memory; {bench_key}").as_str(),
+            |b| b.iter(|| cancellable_hash_data(black_box(&data))),
+        );
+        Ok(())
+    });
+    assert!(r.is_ok());
+
+    // Check cancellation using a Python interpreter.
     // Ideally, this would be using real Python functions, but that's
     // a bit cumbersome to actually setup.
     pyo3::Python::initialize();

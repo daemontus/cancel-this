@@ -6,7 +6,7 @@ use std::fmt::{Debug, Display, Formatter};
 /// In cases where the operation itself can result in an error `E`, make sure to implement
 /// `From<Cancelled>` for `E`, meaning you'll still be able to use
 /// the `is_cancelled` macro and other features of this crate.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct Cancelled {
     cause: &'static str,
 }

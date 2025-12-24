@@ -3,7 +3,7 @@ use log::trace;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 
-/// Run the given `action`, cancelling it if the provided [`CancelAtomic`] `trigger` is cancelled
+/// Run the given `action`, cancelling it if the provided [`CancelAtomic`] `trigger` is canceled
 /// by some external mechanism.
 ///
 /// ```rust
@@ -22,7 +22,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 ///
 /// // Run two actions, one fast, the other slow. Both cancel the `trigger` once they are done,
 /// // but only the fast action should be able to finish. The slow action should end up being
-/// // cancelled.
+/// // canceled.
 ///
 /// let trigger_slow = trigger.clone();
 /// let t1 = std::thread::spawn(move || {
@@ -52,10 +52,10 @@ where
     crate::on_trigger(trigger, action)
 }
 
-/// Implementation of [`CancellationTrigger`] that is cancelled manually by calling
-/// [`CancelAtomic::cancel`]. See also [`crate::on_atomic`].
+/// Implementation of [`CancellationTrigger`] that is canceled manually by calling
+/// [`CancelAtomic::cancel`]. See also [`on_atomic`].
 ///
-/// It is safe to cancel this trigger multiple times, and once cancelled, the trigger
+/// It is safe to cancel this trigger multiple times, and once canceled, the trigger
 /// cannot be reset.
 ///
 /// ## Logging
@@ -82,7 +82,7 @@ impl CancelAtomic {
     /// Cancel this trigger.
     ///
     /// Can be safely called multiple times, but once triggered, the instance is considered
-    /// cancelled and cannot be reset.
+    /// canceled and cannot be reset.
     pub fn cancel(&self) {
         let first_caller = self
             .0

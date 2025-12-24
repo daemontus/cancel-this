@@ -11,7 +11,7 @@
 
 This crate provides a user-friendly way to implement cooperative 
 cancellation in Rust based on a wide range of criteria, including
-*triggers*, *timers*, *OS signals* (Ctrl+C), or the *Python 
+*triggers*, *timers*, *OS signals* (Ctrl+C), *memory limit*, or the *Python 
 interpreter linked using PyO3*. It also provides liveness monitoring
 of "cancellation aware" code.
 
@@ -30,24 +30,31 @@ make cancellation dead simple: You register however many cancellation triggers
 you want, each trigger is valid within a specific scope (and thread), and can be checked
 by a macro anywhere in your code.
 
+ > A linguistic sidenote: While both are correct, American English prefers double-L 
+ > (`cancellation`) in the noun form and single-L (`canceled`) for the verb form. 
+ > Furthermore, for words like `cancellable`, the convention is not really clear. 
+ > This crate uses double-L everywhere in code (for consistency). In documentation
+ > and comments, we try to follow the official linguistic conventions.
+
 ### Current features
 
- - Scoped cancellation using thread-local "cancellation triggers".
- - Out-of-the box support for triggers based on atomics and timers.
+ - Scoped cancellation using thread-local "cancellation triggers."
+ - Out-of-the-box support for triggers based on atomics and timers.
  - With feature `ctrlc` enabled, support for cancellation using `SIGINT` signals.
  - With feature `pyo3` enabled, support for cancellation using `Python::check_signals`.
+ - With feature `memory` enabled, support for cancellation based on memory consumption returned by `memory-stats`.
  - With feature `liveness` enabled, you can register a per-thread handler invoked
-   once the thread becomes unresponsive (i.e. cancellation is not checked periodically
-   withing the desired interval).
+   once the thread becomes unresponsive (i.e., cancellation is not checked periodically
+   within the desired interval).
  - Practically no overhead in cancellable code when cancellation is not actively used.
- - Very small overhead for "atomic-based" cancellation triggers and PyO3 cancellation.
+ - Minimal overhead for "atomic-based" cancellation triggers and PyO3 cancellation.
  - All triggers and guards generate [`log`](https://crates.io/crates/log) messages (`trace` for normal operation, 
    `warn` for issues where panic can be avoided).
 
 ### Simple example
 
-A simple counter that is eventually cancelled by a one-second timeout. More complex examples (including
-liveness monitoring and multi-threaded usage) are provided in the [documentation](https://docs.rs/cancel-this/).
+A simple counter that is eventually canceled by a one-second timeout. More complex examples (including
+liveness monitoring and multithreaded usage) are provided in the [documentation](https://docs.rs/cancel-this/).
 
 ```rust
 use std::time::Duration;
@@ -80,14 +87,14 @@ The overall overhead of adding cancellation checks will **heavily** depend on ho
 Under ideal conditions, you don't want to run them too often. However, delaying cancellation too much can make
 your code seem unresponsive. In `./benches`, we provide a benchmark to illustrate the impact of cancellation
 on simple code. Here, we intentionally use cancellation checks too often to gain significant overhead. In your
-own code, it is typically sufficient to run cancellation every few milliseconds.
+own code, it is typically enough to run cancellation every few milliseconds.
 
 #### Caching cancellation triggers
 
-If you need to check cancellation repeatedly in a performance sensitive piece of code, you might want to 
+If you need to check cancellation repeatedly in a performance-sensitive piece of code, you might want to 
 sacrifice some ergonomics of `cancel_this` for reduced overhead. In such cases, you can use 
 `cancel_this::active_triggers` to store a "local copy" of all active triggers. You can then pass such triggers
-directly to `is_cancelled!` to avoid a (relatively) costly thread-local variable access.
+directly to `is_cancelled!` to avoid (relatively) costly thread-local variable access.
 
 #### Sample results
 
@@ -124,6 +131,9 @@ hash::cancellable::timeout; (liveness=true)          7.7143 µs
 hash::cancellable::sigint; (liveness=false)          4.9717 µs
 hash::cancellable::sigint; (liveness=true)           7.7038 µs
 
+hash::cancellable::memory; (liveness=true)           535.34 µs
+hash::cancellable::memory; (liveness=false)          533.16 µs
+
 # Tested in simulated environment; results using actual Python
 # interpreter will be slightly worse, depending on the interpreter.
 
@@ -132,4 +142,4 @@ hash::cancellable::python; (liveness=true)           7.8942 µs
 ```
 
 To run the benchmarks locally, simply use `cargo bench --all-features` (with liveness turned on) or 
-`cargo bench --features=ctrlc --features=pyo3` (liveness turned off).
+`cargo bench --features=ctrlc --features=pyo3 --features=memory` (liveness turned off).

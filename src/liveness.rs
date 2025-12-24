@@ -16,9 +16,9 @@ thread_local! {
 ///
 /// **Each [`LivenessGuard`] is bound to the specific thread it has been started on, and
 /// monitors cancellation tasks in that thread only.** If the thread is blocked for a long
-/// time due to some external reason (e.g. waiting for IO), this is still considered as
+/// time due to some external reason (e.g., waiting for IO), this is still considered as
 /// "becoming unresponsive". As such, it is generally a good idea to set the responsiveness
-/// threshold reasonably high (e.g. at least a few seconds) to avoid spurious
+/// threshold reasonably high (e.g., at least a few seconds) to avoid spurious
 /// reports of inactivity.
 ///
 /// ```rust
@@ -64,7 +64,7 @@ impl LivenessGuard {
     ///
     /// The callback is invoked every time the liveness changes, which can happen periodically,
     /// approximately every time the threshold duration elapses. The callback receives the new
-    /// liveness status as argument. If the liveness status has not changed, the callback is
+    /// liveness status as an argument. If the liveness status has not changed, the callback is
     /// not invoked.
     ///
     pub fn new<TAction: Fn(bool) + Send + Sync + 'static>(

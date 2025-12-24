@@ -25,19 +25,19 @@ use std::sync::Mutex;
 ///     unsafe { assert_eq!(libc::kill(pid, libc::SIGINT), 0) }
 /// });
 ///
-/// // First action is fast (30ms) and should complete before SIGINT is triggered.
+/// // The first action is fast (30ms) and should complete before SIGINT is triggered.
 /// let result_fast = cancel_this::on_sigint(|| cancellable_counter(3));
 /// assert!(result_fast.is_ok());
 ///
-/// // Second action is slow and will be cancelled by SIGINT.
+/// // The second action is slow and will be canceled by SIGINT.
 /// let result_slow = cancel_this::on_sigint(|| cancellable_counter(50));
 /// assert!(result_slow.is_err());
 /// ```
 ///
 /// # Panics
 /// The operation can panic if the internal handler of the `ctrlc` crate has been already set
-/// by some other piece of code that is not controlled by this crate (multiple instances of
-/// the [`CancelCtrlc`] trigger should be managed by this crate safely).
+/// by some other piece of code. Multiple registrations of the [`CancelCtrlc`] trigger are safely
+/// managed by this crate.
 pub fn on_sigint<TResult, TError, TAction>(action: TAction) -> Result<TResult, TError>
 where
     TAction: FnOnce() -> Result<TResult, TError>,
@@ -65,18 +65,18 @@ lazy_static! {
     });
 }
 
-/// Implementation of [`CancellationTrigger`] that is cancelled when SIGINT (Ctrl+C)
+/// Implementation of [`CancellationTrigger`] that is canceled when SIGINT (Ctrl+C)
 /// is triggered.
 ///
 /// This uses the `ctrlc` crate to observe the SIGINT events. As such, it
 /// needs to call `ctrlc::set_handler` upon first use, meaning it can fail if
 /// other features in your code also use `ctrlc`.
 ///
-/// See also [`crate::on_sigint`].
+/// See also [`on_sigint`].
 ///
 /// ## Logging
 ///  - [`trace`] Every time the SIGINT event is processed, the number of affected triggers
-///    is listed. Each trigger should also produce a message once actually cancelled.
+///    is listed. Each trigger should also produce a message once actually canceled.
 #[derive(Debug, Clone)]
 pub struct CancelCtrlc(CancelAtomic);
 
@@ -100,7 +100,7 @@ impl CancelCtrlc {
     /// Try to create a new instance of [`CancelCtrlc`], returning an error if
     /// the initialization of the `ctrlc` handler wasn't successful.
     ///
-    /// Note that the initialization only runs once, i.e. if the method fails once, it will
+    /// Note that the initialization only runs once, i.e., if the method fails once, it will
     /// fail every time.
     pub fn try_new() -> Result<Self, &'static ctrlc::Error> {
         match CTRLC_INITIALIZED.as_ref() {

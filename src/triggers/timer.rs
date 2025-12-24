@@ -37,13 +37,13 @@ where
     crate::on_trigger(CancelTimer::start(duration), action)
 }
 
-/// Implementation of [`CancellationTrigger`] that is cancelled once the specified [`Duration`]
+/// Implementation of [`CancellationTrigger`] that is canceled once the specified [`Duration`]
 /// elapsed. The "timer" is started immediately upon creation.
 ///
-/// See also [`crate::on_timeout`].
+/// See also [`on_timeout`].
 ///
 /// ## Logging
-///  - `[trace]` Every time a timer is started or elapsed (i.e. upon cancellation).
+///  - `[trace]` Every time a timer is started or elapsed (i.e., upon cancellation).
 ///  - `[warn]` If the timer is dropped, but the timer thread cannot be safely destroyed.
 #[derive(Debug, Clone)]
 // The trigger is storing its "core data", but it won't access them. It only needs to keep them
@@ -62,7 +62,7 @@ impl CancellationTrigger for CancelTimer {
 }
 
 impl CancelTimer {
-    /// Create a new [`CancelTimer`] that will be cancelled once the given `duration` elapsed.
+    /// Create a new [`CancelTimer`] that will be canceled once the given `duration` elapsed.
     pub fn start(duration: Duration) -> Self {
         let trigger = CancelAtomic::default();
         let core = CancelTimerCore::start(trigger.clone(), duration);
@@ -91,10 +91,10 @@ impl CancelTimerCore {
         let trigger_copy = trigger.clone();
         let (sender, receiver) = std::sync::mpsc::channel();
         let handle = std::thread::spawn(move || {
-            // If this is `Ok`, it means the timer got cancelled.
+            // If this is `Ok`, it means the timer got canceled.
             // If it is `Err`, it means the duration elapsed.
             // In practice, this distinction should be irrelevant, since the timer can only
-            // be cancelled if the whole cancellation trigger is dropped, meaning it is no
+            // be canceled if the whole cancellation trigger is dropped, meaning it is no
             // longer observed by anyone...
             match receiver.recv_timeout(duration) {
                 Ok(()) => (),

@@ -12,6 +12,11 @@ pub use never::*;
 mod atomic;
 pub use atomic::*;
 
+#[cfg(feature = "memory")]
+mod memory;
+#[cfg(feature = "memory")]
+pub use memory::*;
+
 #[cfg(feature = "ctrlc")]
 mod ctrlc;
 #[cfg(feature = "ctrlc")]
@@ -28,17 +33,17 @@ pub use pyo3::*;
 /// can be safely cloned.
 ///
 /// **The expectation is that cloning a cancellation trigger produces an object that reacts to
-/// the same signal, i.e. is cancelled if and only if the original object is cancelled.**
+/// the same signal, i.e., is canceled if and only if the original object is canceled.**
 ///
 pub trait CancellationTrigger: Send + Sync + DynClone {
-    /// Returns true if this trigger is cancelled.
+    /// Returns true if this trigger is canceled.
     ///
-    /// In normal conditions, once a trigger is cancelled, it stays cancelled and should
+    /// In normal conditions, once a trigger is canceled, it stays canceled and should
     /// not be able to reset.
     fn is_cancelled(&self) -> bool;
 
     /// Return the type name of this [`CancellationTrigger`], or in case of "composite"
-    /// triggers, *the type name of the trigger that actually signalled the cancellation*.
+    /// triggers, *the type name of the trigger that actually signaled the cancellation*.
     fn type_name(&self) -> &'static str;
 }
 

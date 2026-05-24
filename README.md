@@ -40,16 +40,23 @@ by a macro anywhere in your code.
 
  - Scoped cancellation using thread-local "cancellation triggers."
  - Out-of-the-box support for triggers based on atomics and timers.
- - With feature `ctrlc` enabled, support for cancellation using `SIGINT` signals.
- - With feature `pyo3` enabled, support for cancellation using `Python::check_signals`.
- - With feature `memory` enabled, support for cancellation based on memory consumption returned by `memory-stats`.
- - With feature `liveness` enabled, you can register a per-thread handler invoked
+ - With the feature `ctrlc` enabled, support for cancellation using `SIGINT` signals.
+ - With the feature `pyo3` enabled, support for cancellation using `Python::check_signals`.
+ - With the feature `memory` enabled, support for cancellation based on memory consumption returned by `memory-stats`.
+ - With the feature `liveness` enabled, you can register a per-thread handler invoked
    once the thread becomes unresponsive (i.e., cancellation is not checked periodically
    within the desired interval).
  - Practically no overhead in cancellable code when cancellation is not actively used.
  - Minimal overhead for "atomic-based" cancellation triggers and PyO3 cancellation.
  - All triggers and guards generate [`log`](https://crates.io/crates/log) messages (`trace` for normal operation, 
    `warn` for issues where panic can be avoided).
+
+### Memory limit cancellation
+
+With the `memory` feature enabled, there are two ways to cancel based on process memory usage:
+
+ - **`on_memory_sample`** (recommended) — a background thread samples memory at a fixed interval (1 ms by default). Cancellation checks are cheap, but readings can be slightly stale and the first check happens only after the first interval elapses.
+ - **`on_memory_poll`** — queries memory on every cancellation check, including the first one. More accurate, but much more expensive per check (see the *Performance* section below).
 
 ### Simple example
 
@@ -131,8 +138,11 @@ hash::cancellable::timeout; (liveness=true)          7.7143 µs
 hash::cancellable::sigint; (liveness=false)          4.9717 µs
 hash::cancellable::sigint; (liveness=true)           7.7038 µs
 
-hash::cancellable::memory; (liveness=true)           535.34 µs
-hash::cancellable::memory; (liveness=false)          533.16 µs
+hash::cancellable::memory::sample; (liveness=false)  5.8852 µs
+hash::cancellable::memory::sample; (liveness=true)   8.1422 µs
+
+hash::cancellable::memory::poll; (liveness=false)    533.16 µs
+hash::cancellable::memory::poll; (liveness=true)     535.34 µs
 
 # Tested in simulated environment; results using actual Python
 # interpreter will be slightly worse, depending on the interpreter.

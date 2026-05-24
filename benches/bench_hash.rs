@@ -129,9 +129,19 @@ fn criterion_benchmark(c: &mut Criterion) {
     assert!(r.is_ok());
 
     // Check cancellation using memory.
-    let r: Cancellable<()> = cancel_this::on_memory(100_000_000, || {
+    let r: Cancellable<()> = cancel_this::on_memory_poll(100_000_000, || {
         c.bench_function(
-            format!("{bench_prefix}::cancellable::memory; {bench_key}").as_str(),
+            format!("{bench_prefix}::cancellable::memory::poll; {bench_key}").as_str(),
+            |b| b.iter(|| cancellable_hash_data(black_box(&data))),
+        );
+        Ok(())
+    });
+    assert!(r.is_ok());
+
+    // Check cancellation using sampled memory monitoring.
+    let r: Cancellable<()> = cancel_this::on_memory_sample(100_000_000, || {
+        c.bench_function(
+            format!("{bench_prefix}::cancellable::memory::sample; {bench_key}").as_str(),
             |b| b.iter(|| cancellable_hash_data(black_box(&data))),
         );
         Ok(())

@@ -25,8 +25,8 @@ liveness = []
 dyn-clone = "1.0"
 log = "0.4"
 lazy_static = "1.5"
-ctrlc = { version = "3.5.1", optional = true }
-pyo3 = { version = "0.27", optional = true }
+ctrlc = { version = "3.5.2", optional = true }
+pyo3 = { version = "0.28", optional = true }
 # The "always_use_statm" feature should prioritize speed over accuracy.
 memory-stats = { version = "1.2", optional = true, features = ["always_use_statm"] }
 

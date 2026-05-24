@@ -23,10 +23,10 @@
 //!
 //! - Scoped cancellation using thread-local "cancellation triggers".
 //! - Out-of-the-box support for triggers based on atomics and timers.
-//! - With feature `ctrlc` enabled, support for cancellation using `SIGINT` signals.
-//! - With feature `pyo3` enabled, support for cancellation using `Python::check_signals`.
-//! - With feature `memory` enabled, support for cancellation based on memory consumption returned by `memory-stats`.
-//! - With feature `liveness` enabled, you can register a per-thread handler invoked
+//! - With the feature `ctrlc` enabled, support for cancellation using `SIGINT` signals.
+//! - With the feature `pyo3` enabled, support for cancellation using `Python::check_signals`.
+//! - With the feature `memory` enabled, support for cancellation based on memory consumption returned by `memory-stats`.
+//! - With the feature `liveness` enabled, you can register a per-thread handler invoked
 //!   once the thread becomes unresponsive (i.e., cancellation is not checked periodically
 //!   within the desired interval).
 //! - Practically no overhead in cancellable code when cancellation is not actively used.
@@ -60,6 +60,16 @@
 //!
 //! assert!(result.is_err());
 //! ```
+//!
+//! ## Memory limit cancellation
+//!
+//! With the `memory` feature enabled, there are two ways to cancel based on process memory usage:
+//!
+//! - [`on_memory_sample`] (recommended) — a background thread samples memory at a fixed interval
+//!   (1 ms by default). Cancellation checks are cheap, but readings can be slightly stale and the
+//!   first check happens only after the first interval elapses.
+//! - [`on_memory_poll`] — queries memory on every cancellation check, including the first one.
+//!   More accurate, but much more expensive per check.
 //!
 //! ## Complex example
 //!

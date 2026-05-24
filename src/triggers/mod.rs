@@ -13,9 +13,13 @@ mod atomic;
 pub use atomic::*;
 
 #[cfg(feature = "memory")]
-mod memory;
+mod memory_poll;
 #[cfg(feature = "memory")]
-pub use memory::*;
+mod memory_sample;
+#[cfg(feature = "memory")]
+pub use memory_poll::*;
+#[cfg(feature = "memory")]
+pub use memory_sample::*;
 
 #[cfg(feature = "ctrlc")]
 mod ctrlc;

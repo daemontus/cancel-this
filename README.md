@@ -131,8 +131,11 @@ hash::cancellable::timeout; (liveness=true)          7.7143 µs
 hash::cancellable::sigint; (liveness=false)          4.9717 µs
 hash::cancellable::sigint; (liveness=true)           7.7038 µs
 
-hash::cancellable::memory; (liveness=true)           535.34 µs
-hash::cancellable::memory; (liveness=false)          533.16 µs
+hash::cancellable::memory::sample; (liveness=false)  5.8852 µs
+hash::cancellable::memory::sample; (liveness=true)   8.1422 µs
+
+hash::cancellable::memory::poll; (liveness=false)    533.16 µs
+hash::cancellable::memory::poll; (liveness=true)     535.34 µs
 
 # Tested in simulated environment; results using actual Python
 # interpreter will be slightly worse, depending on the interpreter.

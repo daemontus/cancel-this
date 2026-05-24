@@ -10,8 +10,9 @@ use std::sync::atomic::{AtomicBool, Ordering::SeqCst};
 /// memory consumption. While this is not prohibitively costly, it is still much more
 /// expensive than all other cancellation triggers implemented in this crate.*
 ///
-/// See also [`on_memory_sampled`] for a cheaper alternative that samples memory usage in a
-/// background thread.
+/// Memory usage is checked on every cancellation check, including the first one. See
+/// [`crate::on_memory_sample`] for a cheaper alternative that samples memory usage in a background
+/// thread (with slightly stale readings and a delay before the first check).
 ///
 /// ```rust
 /// # use cancel_this::{Cancelled, is_cancelled};
@@ -46,6 +47,16 @@ where
     crate::on_trigger(CancelMemoryPoll::limit(limit), action)
 }
 
+/// Deprecated alias for [`on_memory_poll`].
+#[deprecated(since = "0.4.0", note = "renamed to `on_memory_poll`")]
+pub fn on_memory<TResult, TError, TAction>(limit: usize, action: TAction) -> Result<TResult, TError>
+where
+    TAction: FnOnce() -> Result<TResult, TError>,
+    TError: From<Cancelled>,
+{
+    on_memory_poll(limit, action)
+}
+
 /// Implementation of [`CancellationTrigger`] that is canceled when the given memory limit
 /// is exceeded (monitored via polling).
 ///
@@ -55,7 +66,7 @@ where
 /// overhead to cancellation checks. We are trying to mitigate this by using the "faster" but
 /// less accurate memory check method, but this can still be non-trivial.
 ///
-/// See also [`on_memory_poll`], [`CancelMemorySampled`], and [`on_memory_sampled`].
+/// See also [`on_memory_poll`], [`crate::CancelMemorySample`], and [`crate::on_memory_sample`].
 ///
 /// ## Logging
 ///  - Each trigger should produce a [`trace`] message when actually canceled.
@@ -77,7 +88,7 @@ impl CancellationTrigger for CancelMemoryPoll {
         {
             self.is_cancelled.store(true, SeqCst); // Remember that this trigger is now canceled.
             trace!(
-                "`CancelMemory[{:p}]` canceled (limit: {}; used: {}).",
+                "`CancelMemoryPoll[{:p}]` canceled (limit: {}; used: {}).",
                 self, self.mem_limit_bytes, stats.physical_mem
             );
             return true;
@@ -87,9 +98,13 @@ impl CancellationTrigger for CancelMemoryPoll {
     }
 
     fn type_name(&self) -> &'static str {
-        "CancelMemory"
+        "CancelMemoryPoll"
     }
 }
+
+/// Deprecated alias for [`CancelMemoryPoll`].
+#[deprecated(since = "0.4.0", note = "renamed to `CancelMemoryPoll`")]
+pub type CancelMemory = CancelMemoryPoll;
 
 impl CancelMemoryPoll {
     /// Create a new instance of [`CancelMemoryPoll`] with the given memory limit (in bytes).

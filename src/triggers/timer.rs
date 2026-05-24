@@ -129,7 +129,7 @@ impl Drop for CancelTimerCore {
                 // elapsed and the thread should be dead.
                 if !thread.is_finished() {
                     warn!(
-                        "Timer of `CancelTimer[{:p}]` cannot be stopped. Possible thread leak.`",
+                        "Timer of `CancelTimer[{:p}]` cannot be stopped. Possible thread leak.",
                         self.trigger.id_ref()
                     );
                     return;

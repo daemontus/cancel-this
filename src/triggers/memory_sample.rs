@@ -9,8 +9,11 @@ use std::time::Duration;
 /// consumption of the whole process exceeds the given memory `limit` (in bytes).
 ///
 /// Memory usage is sampled by a background thread at roughly one-millisecond intervals.
-/// This makes cancellation checks much cheaper than [`on_memory`], but the observed memory
-/// usage can be slightly stale.
+/// This makes cancellation checks much cheaper than [`crate::on_memory_poll`], but the observed memory
+/// usage can be slightly stale. Unlike polling, the first memory check happens only after the
+/// first sampling interval elapses (not immediately when the trigger is created). Also note that
+/// sampling can trigger between cancellation points, so the sampler can in theory see higher
+/// usage even if the affected memory is only used in-between cancellation points.
 ///
 /// ```rust
 /// # use cancel_this::{Cancelled, is_cancelled};
@@ -46,6 +49,8 @@ where
 }
 
 /// Same as [`on_memory_sample`], but with a custom sampling `interval`.
+///
+/// The `sample_interval` must be greater than zero.
 pub fn on_memory_sample_with_interval<TResult, TError, TAction>(
     limit: usize,
     sample_interval: Duration,
@@ -61,14 +66,15 @@ where
 /// Implementation of [`CancellationTrigger`] that is canceled when the given memory limit
 /// is exceeded (monitored via sampling).
 ///
-/// This uses the `memory-stats` crate to observe memory usage. Unlike [`CancelMemory`], memory
+/// This uses the `memory-stats` crate to observe memory usage. Unlike [`crate::CancelMemoryPoll`], memory
 /// usage is monitored by a background thread at a fixed interval. As a consequence, this is not
 /// a hard memory limit (the execution still only stops at cancellation points), and the observed
 /// memory usage can be slightly stale, but cancellation checks themselves are cheap.
 ///
-/// The sampler is started immediately upon creation.
+/// The sampler is started immediately upon creation, but the first memory check is performed
+/// only after the first sampling interval elapses.
 ///
-/// See also [`on_memory_sample`], [`on_memory_sample_with_interval`], and [`CancelMemory`].
+/// See also [`on_memory_sample`], [`on_memory_sample_with_interval`], and [`crate::CancelMemoryPoll`].
 ///
 /// ## Logging
 ///  - `[trace]` Every time a sampler is started or the memory limit is exceeded (i.e., upon cancellation).
@@ -85,18 +91,20 @@ impl CancellationTrigger for CancelMemorySample {
     }
 
     fn type_name(&self) -> &'static str {
-        "CancelMemorySampled"
+        "CancelMemorySample"
     }
 }
 
 impl CancelMemorySample {
     /// Create a new [`CancelMemorySample`] that will be canceled once the given memory `limit`
     /// (in bytes) is exceeded. Memory usage is sampled at the given `sample_interval`.
+    ///
+    /// The `sample_interval` must be greater than zero.
     pub fn start(limit: usize, sample_interval: Duration) -> Self {
         let trigger = CancelAtomic::default();
         let core = CancelMemorySampleCore::start(trigger.clone(), limit, sample_interval);
         trace!(
-            "`CancelMemorySampled[{:p}]` started; Sampling every {}ms (limit: {} bytes).",
+            "`CancelMemorySample[{:p}]` started; Sampling every {}ms (limit: {} bytes).",
             trigger.id_ref(),
             sample_interval.as_millis(),
             limit
@@ -117,6 +125,10 @@ struct CancelMemorySampleCore {
 
 impl CancelMemorySampleCore {
     pub fn start(trigger: CancelAtomic, mem_limit_bytes: usize, sample_interval: Duration) -> Self {
+        assert!(
+            !sample_interval.is_zero(),
+            "`sample_interval` must be greater than zero"
+        );
         let trigger_copy = trigger.clone();
         let (sender, receiver) = std::sync::mpsc::channel();
         let handle = std::thread::spawn(move || {
@@ -130,7 +142,7 @@ impl CancelMemorySampleCore {
                             && stats.physical_mem > mem_limit_bytes
                         {
                             trace!(
-                                "`CancelMemorySampled[{:p}]` canceled (limit: {}; used: {}).",
+                                "`CancelMemorySample[{:p}]` canceled (limit: {}; used: {}).",
                                 trigger_copy.id_ref(),
                                 mem_limit_bytes,
                                 stats.physical_mem
@@ -164,7 +176,7 @@ impl Drop for CancelMemorySampleCore {
                 // detected a memory limit breach and the thread should be dead.
                 if !thread.is_finished() {
                     warn!(
-                        "Sampler of `CancelMemorySampled[{:p}]` cannot be stopped. Possible thread leak.`",
+                        "Sampler of `CancelMemorySample[{:p}]` cannot be stopped. Possible thread leak.",
                         self.trigger.id_ref()
                     );
                     return;
@@ -175,7 +187,7 @@ impl Drop for CancelMemorySampleCore {
         };
         if join.is_err() {
             // The thread panicked, meaning we probably want to propagate it.
-            panic!("Sampler thread of `CancelMemorySampled` trigger panicked.");
+            panic!("Sampler thread of `CancelMemorySample` trigger panicked.");
         }
     }
 }

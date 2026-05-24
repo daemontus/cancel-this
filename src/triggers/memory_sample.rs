@@ -1,7 +1,7 @@
 use crate::{CancelAtomic, CancellationTrigger, Cancelled};
 use log::{trace, warn};
 use std::sync::Arc;
-use std::sync::mpsc::Sender;
+use std::sync::mpsc::{RecvTimeoutError, Sender};
 use std::thread::JoinHandle;
 use std::time::Duration;
 
@@ -133,11 +133,13 @@ impl CancelMemorySampleCore {
         let (sender, receiver) = std::sync::mpsc::channel();
         let handle = std::thread::spawn(move || {
             loop {
-                // If this is `Ok`, it means the sampler got stopped.
-                // If it is `Err`, it means the sampling interval elapsed.
                 match receiver.recv_timeout(sample_interval) {
+                    // If this is `Ok`, it means the sampler got stopped intentionally.
                     Ok(()) => break,
-                    Err(_) => {
+                    // Disconnect means something bad has happened and we should stop.
+                    Err(RecvTimeoutError::Disconnected) => break,
+                    // Timeout means the sampling interval elapsed.
+                    Err(RecvTimeoutError::Timeout) => {
                         if let Some(stats) = memory_stats::memory_stats()
                             && stats.physical_mem > mem_limit_bytes
                         {
